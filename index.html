@@ -1,329 +1,418 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Embodied Minds · Workshop Notes</title>
-<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,300;1,8..60,400;1,8..60,500&family=Sora:wght@200;300;400;500;600&display=swap" rel="stylesheet"/>
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg:#0B0D1A; --card:#111328; --elevated:#171A32; --hover:#1D2040; --mist:#E8E4F0;
-    --lunar:#E8EAF2;
-    --lunar-90:rgba(232,234,242,0.90); --lunar-70:rgba(232,234,242,0.70);
-    --lunar-50:rgba(232,234,242,0.50); --lunar-30:rgba(232,234,242,0.20);
-    --ink:#0B0D1A; --ink-lavender:#6B5F8A;
-    --lavender:#9B8EC4; --lavender-light:#B0A5D4;
-    --gold:#D4A94E; --gold-light:#E2C06A;
-    --gold-dim:rgba(212,169,78,0.10);
-    --border:rgba(232,234,242,0.07); --border-h:rgba(232,234,242,0.14);
-    --green:#2a6a3a;
-    --serif:'Source Serif 4','Georgia',serif;
-    --sans:'Sora','Helvetica Neue',sans-serif;
-  }
-  body {
-    background:var(--bg);
-    background-image:
-      radial-gradient(ellipse 80% 60% at 70% 10%, rgba(155,142,196,0.07) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 50% at 20% 50%, rgba(75,68,120,0.06) 0%, transparent 55%),
-      radial-gradient(ellipse 70% 40% at 80% 80%, rgba(196,162,101,0.04) 0%, transparent 50%);
-    color:var(--lunar); font-family:var(--sans); font-weight:300; min-height:100vh;
-    display:flex; align-items:flex-start; justify-content:center; padding:40px 20px;
-    -webkit-font-smoothing:antialiased;
-  }
-  #app { width:100%; max-width:700px; }
-  .screen { animation:fadein .4s ease; }
-  @keyframes fadein { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workshop Notes — Embodied Minds Summit</title>
+  <meta name="description" content="Capture breakout group notes for each workshop session at the Embodied Minds Summit, May 3, 2026.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,500;8..60,600&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
 
-  .mark { font-size:26px; color:var(--gold-light); cursor:pointer; user-select:none; display:inline-block; margin-bottom:36px; line-height:1; }
-  .eyebrow { font-size:11px; letter-spacing:3.5px; text-transform:uppercase; color:var(--lavender); margin-bottom:18px; font-weight:500; }
-  .title { font-family:var(--serif); font-size:clamp(28px,4vw,42px); font-weight:500; line-height:1.15; margin-bottom:20px; letter-spacing:-0.02em; }
-  .title em { font-style:italic; color:var(--gold-light); }
-  .subtitle { font-size:15px; color:var(--lunar-70); line-height:1.7; margin-bottom:32px; max-width:480px; }
+  <style>
+    :root {
+      --cosmic: #0B0D1A;
+      --card: #10121F;
+      --elevated: #151728;
+      --lunar: #E8EAF2;
+      --lunar-90: rgba(232,234,242,0.90);
+      --lunar-60: rgba(232,234,242,0.60);
+      --lunar-40: rgba(232,234,242,0.40);
+      --lunar-12: rgba(232,234,242,0.12);
+      --lunar-07: rgba(232,234,242,0.07);
+      --gold: #D4A94E;
+      --gold-deep: #C49A42;
+      --gold-dark: #A07830;
+      --gold-40: rgba(212,169,78,0.40);
+      --gold-15: rgba(212,169,78,0.15);
+      --gold-08: rgba(212,169,78,0.08);
+      --lavender: #9B8EC4;
+      --lavender-20: rgba(155,142,196,0.20);
+      --lavender-08: rgba(155,142,196,0.08);
+      --muted: rgba(232,234,242,0.45);
+      --green: #2a6a3a;
+      --font-serif: 'Source Serif 4', Georgia, serif;
+      --font-sans: 'Sora', 'Helvetica Neue', sans-serif;
+      --max-w: 1100px;
+    }
 
-  /* Cards for session/question selection */
-  .card-grid { display:flex; flex-direction:column; gap:10px; }
-  .card {
-    background:var(--card); border:1px solid var(--border); border-radius:10px;
-    padding:20px 24px; cursor:pointer; transition:all .2s ease;
-  }
-  .card:hover { border-color:var(--border-h); background:var(--elevated); transform:translateY(-1px); }
-  .card-title { font-family:var(--serif); font-size:20px; font-weight:500; margin-bottom:4px; }
-  .card-sub { font-size:13px; color:var(--lunar-50); line-height:1.6; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
 
-  /* Team entry */
-  .input-group { margin-bottom:24px; }
-  .input-label { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--lavender); margin-bottom:8px; font-weight:500; }
-  .text-input {
-    width:100%; background:var(--card); border:1px solid var(--border); border-radius:8px;
-    color:var(--lunar); font-family:var(--sans); font-size:15px; font-weight:300;
-    padding:14px 18px; outline:none; transition:border-color .2s;
-  }
-  .text-input:focus { border-color:var(--lavender); }
-  .text-input::placeholder { color:var(--lunar-30); }
+    body {
+      background: var(--cosmic);
+      color: var(--lunar);
+      font-family: var(--font-sans);
+      font-weight: 400;
+      font-size: 16px;
+      line-height: 1.7;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
 
-  .existing-teams { margin-bottom:24px; }
-  .existing-teams-label { font-size:12px; color:var(--lunar-50); margin-bottom:8px; }
-  .team-chip {
-    display:inline-block; background:var(--card); border:1px solid var(--border); border-radius:6px;
-    padding:6px 14px; font-size:13px; color:var(--lunar-70); cursor:pointer; margin:0 6px 6px 0;
-    transition:all .15s;
-  }
-  .team-chip:hover { border-color:var(--gold); color:var(--lunar); background:var(--gold-dim); }
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 50% 40% at 80% 15%, rgba(155,142,196,0.04) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 50% at 10% 50%, rgba(212,169,78,0.03) 0%, transparent 65%),
+        radial-gradient(ellipse 60% 35% at 60% 85%, rgba(155,142,196,0.035) 0%, transparent 70%);
+    }
 
-  /* Notes editor */
-  .question-display {
-    font-family:var(--serif); font-size:clamp(18px,3vw,24px); font-weight:500;
-    line-height:1.4; margin-bottom:6px; color:var(--lunar);
-  }
-  .team-display { font-size:13px; color:var(--lavender); margin-bottom:20px; }
-  .notes-area {
-    width:100%; min-height:60vh; background:var(--card); border:1px solid var(--border);
-    border-radius:10px; color:var(--lunar); font-family:var(--sans); font-size:15px;
-    font-weight:300; padding:20px; line-height:1.8; outline:none; resize:vertical;
-    transition:border-color .2s;
-  }
-  .notes-area:focus { border-color:var(--lavender); }
-  .notes-area::placeholder { color:var(--lunar-30); }
-  .save-indicator {
-    font-size:12px; color:var(--lunar-50); margin-top:8px; display:flex;
-    align-items:center; gap:6px; transition:color .3s;
-  }
-  .save-indicator.saved { color:var(--green); }
-  .save-indicator.saving { color:var(--gold); }
-  .save-indicator.error { color:#c44; }
+    a { color: inherit; text-decoration: none; }
+    img, svg { display: block; max-width: 100%; }
 
-  /* Buttons */
-  .btn-primary {
-    background:linear-gradient(170deg,#D4B67E 0%,#C4A265 60%,#B89555 100%);
-    border:1px solid rgba(212,182,126,0.35); color:var(--ink); font-family:var(--sans);
-    font-size:13px; letter-spacing:1.5px; text-transform:uppercase; padding:14px 32px;
-    cursor:pointer; transition:all .3s ease; border-radius:8px; font-weight:500;
-    box-shadow:0 3px 12px rgba(196,162,101,0.25),inset 0 1px 0 rgba(255,255,255,0.12);
-  }
-  .btn-primary:hover { background:linear-gradient(170deg,#E0C48E 0%,#D4B67E 60%,#C4A265 100%); transform:translateY(-1px); }
-  .btn-primary:disabled { background:var(--elevated); border-color:var(--border); color:var(--lunar-30); cursor:default; box-shadow:none; transform:none; }
-  .btn-back { background:transparent; border:none; color:var(--lunar-50); font-family:var(--sans); font-size:13px; cursor:pointer; letter-spacing:1px; margin-bottom:24px; }
-  .btn-back:hover { color:var(--lunar-70); }
+    /* ─── STICKY HEADER ─── */
+    .site-header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(11,13,26,0.92);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--lunar-07);
+      height: 64px;
+    }
+    .header-inner {
+      max-width: var(--max-w); margin: 0 auto;
+      padding: 0 clamp(24px, 5vw, 64px);
+      height: 100%; display: flex; align-items: center; justify-content: space-between;
+    }
+    .site-title-group { display: flex; align-items: center; gap: 12px; text-decoration: none; cursor: pointer; }
+    .site-logo { height: 38px; width: auto; }
+    .site-title { font-family: var(--font-sans); font-size: 24px; font-weight: 500; color: var(--lunar); letter-spacing: -0.3px; }
+    .header-admin { font-size: 13px; color: var(--lunar-40); cursor: pointer; transition: color 0.3s; background: none; border: none; font-family: var(--font-sans); }
+    .header-admin:hover { color: var(--gold); }
 
-  /* Organizer dashboard */
-  .dash-section { margin-bottom:32px; }
-  .dash-workshop-title { font-family:var(--serif); font-size:22px; font-weight:500; margin-bottom:12px; color:var(--gold-light); }
-  .dash-question { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:16px 20px; margin-bottom:8px; }
-  .dash-question-text { font-size:14px; color:var(--lunar-70); margin-bottom:8px; }
-  .dash-team { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); cursor:pointer; }
-  .dash-team:last-child { border-bottom:none; }
-  .dash-team-name { font-size:14px; color:var(--lunar); }
-  .dash-team-preview { font-size:12px; color:var(--lunar-50); max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .dash-team-time { font-size:11px; color:var(--lunar-30); }
-  .dash-stats { display:flex; gap:24px; margin-bottom:24px; }
-  .dash-stat { text-align:center; }
-  .dash-stat-num { font-family:var(--serif); font-size:28px; font-weight:500; color:var(--gold-light); }
-  .dash-stat-label { font-size:11px; color:var(--lunar-50); letter-spacing:1px; text-transform:uppercase; }
+    /* ─── MAIN WRAP ─── */
+    .wrap {
+      position: relative; z-index: 1;
+      max-width: var(--max-w); margin: 0 auto;
+      padding: clamp(48px, 6vw, 80px) clamp(24px, 5vw, 64px) 80px;
+    }
 
-  /* PIN overlay */
-  .pin-overlay {
-    position:fixed; inset:0; background:var(--bg); display:flex; align-items:center;
-    justify-content:center; flex-direction:column; z-index:100;
-  }
-  .pin-input {
-    width:200px; text-align:center; background:var(--card); border:1px solid var(--border);
-    border-radius:8px; color:var(--lunar); font-family:var(--sans); font-size:24px;
-    font-weight:300; padding:14px; letter-spacing:8px; outline:none;
-  }
-  .pin-input:focus { border-color:var(--lavender); }
-  .pin-error { color:#c44; font-size:13px; margin-top:12px; }
+    /* ─── PAGE HEADER ─── */
+    .page-header { text-align: center; margin-bottom: clamp(40px, 6vw, 64px); }
+    .page-header .lbl {
+      font-size: 10px; font-weight: 600; letter-spacing: 4px; text-transform: uppercase;
+      color: var(--lavender); margin-bottom: 16px;
+    }
+    .page-header h1 {
+      font-family: var(--font-serif); font-size: clamp(28px, 4vw, 42px); font-weight: 500;
+      color: var(--gold); margin-bottom: 14px; line-height: 1.2;
+    }
+    .page-header p { color: var(--lunar-60); font-size: 15px; max-width: 600px; margin: 0 auto; line-height: 1.8; }
+    .page-header .date-badge {
+      display: inline-block; font-size: 11px; font-weight: 500; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--lunar-40); margin-top: 16px;
+    }
 
-  /* Download button */
-  .btn-download {
-    background:transparent; border:1px solid var(--gold); color:var(--gold-light);
-    font-family:var(--sans); font-size:12px; letter-spacing:1px; padding:9px 20px;
-    cursor:pointer; transition:all .2s; border-radius:8px; font-weight:500;
-  }
-  .btn-download:hover { background:rgba(196,162,101,0.08); border-color:var(--gold-light); }
+    /* ─── WORKSHOP TILES ─── */
+    .workshop-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    @media (max-width: 720px) { .workshop-grid { grid-template-columns: 1fr; } }
 
-  /* Responsive */
-  @media (max-width:480px) {
-    body { padding:20px 12px; }
-    .notes-area { min-height:50vh; padding:14px; }
-  }
-</style>
+    .tile {
+      position: relative; background: var(--card); border: 1px solid var(--lunar-07);
+      border-radius: 14px; padding: 36px 32px; cursor: pointer;
+      transition: border-color 0.4s cubic-bezier(0.22,1,0.36,1), background 0.4s cubic-bezier(0.22,1,0.36,1),
+                  box-shadow 0.4s cubic-bezier(0.22,1,0.36,1), transform 0.4s cubic-bezier(0.22,1,0.36,1);
+      display: flex; flex-direction: column; min-height: 220px; overflow: hidden;
+    }
+    .tile { --mx: 80%; --my: 20%; }
+    .tile::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(circle 280px at var(--mx) var(--my), rgba(155,142,196,0.14) 0%, rgba(155,142,196,0.05) 35%, transparent 70%);
+      opacity: 0; transition: opacity 0.4s cubic-bezier(0.22,1,0.36,1); pointer-events: none;
+    }
+    .tile:hover { border-color: var(--lavender-20); background: var(--elevated); box-shadow: 0 12px 40px rgba(0,0,0,0.35); transform: translateY(-2px); }
+    .tile:hover::before { opacity: 1; }
+
+    .tile-label { font-size: 10px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--lavender); margin-bottom: 10px; }
+    .tile h3 { font-family: var(--font-serif); font-size: 20px; font-weight: 500; color: var(--lunar-90); margin-bottom: 10px; line-height: 1.35; }
+    .tile p { color: var(--lunar-40); font-size: 13.5px; line-height: 1.7; flex-grow: 1; margin-bottom: 22px; }
+    .tile-cta {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 12px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold); transition: gap 0.3s;
+    }
+    .tile:hover .tile-cta { gap: 12px; }
+    .tile-cta svg { width: 14px; height: 14px; transition: transform 0.3s; }
+    .tile:hover .tile-cta svg { transform: translateX(2px); }
+
+    /* ─── QUESTION CARDS ─── */
+    .question-grid { display: flex; flex-direction: column; gap: 14px; }
+    .q-card {
+      background: var(--card); border: 1px solid var(--lunar-07); border-radius: 14px;
+      padding: 28px 32px; cursor: pointer;
+      transition: border-color 0.3s, background 0.3s, transform 0.3s;
+    }
+    .q-card:hover { border-color: var(--lavender-20); background: var(--elevated); transform: translateY(-1px); }
+    .q-card-label { font-size: 10px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--lavender); margin-bottom: 8px; }
+    .q-card-text { font-family: var(--font-serif); font-size: 17px; font-weight: 400; color: var(--lunar-90); line-height: 1.55; }
+
+    /* ─── TEAM ENTRY ─── */
+    .team-section { max-width: 640px; margin: 0 auto; }
+    .team-question-text { font-family: var(--font-serif); font-size: clamp(18px,3vw,24px); font-weight: 500; color: var(--gold); line-height: 1.4; margin-bottom: 28px; text-align: center; }
+    .existing-teams { margin-bottom: 24px; text-align: center; }
+    .existing-teams-label { font-size: 12px; color: var(--lunar-40); margin-bottom: 10px; }
+    .team-chip {
+      display: inline-block; background: var(--card); border: 1px solid var(--lunar-07); border-radius: 8px;
+      padding: 8px 18px; font-size: 13px; color: var(--lunar-60); cursor: pointer; margin: 0 6px 8px 0;
+      transition: all 0.2s;
+    }
+    .team-chip:hover { border-color: var(--gold-40); color: var(--lunar); background: var(--gold-08); }
+
+    .btn-create {
+      display: block; width: 100%; max-width: 360px; margin: 0 auto;
+      background: linear-gradient(170deg, #D4B67E 0%, #C4A265 60%, #B89555 100%);
+      border: 1px solid rgba(212,182,126,0.35); color: var(--cosmic); font-family: var(--font-sans);
+      font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; padding: 16px 32px;
+      cursor: pointer; transition: all 0.3s; border-radius: 10px; font-weight: 500;
+      box-shadow: 0 3px 12px rgba(196,162,101,0.25), inset 0 1px 0 rgba(255,255,255,0.12);
+    }
+    .btn-create:hover { background: linear-gradient(170deg, #E0C48E 0%, #D4B67E 60%, #C4A265 100%); transform: translateY(-1px); }
+
+    /* ─── NOTES EDITOR ─── */
+    .notes-wrap { max-width: 800px; margin: 0 auto; }
+    .notes-meta { text-align: center; margin-bottom: 28px; }
+    .notes-team { font-size: 10px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--lavender); margin-bottom: 10px; }
+    .notes-question { font-family: var(--font-serif); font-size: clamp(18px,2.5vw,22px); font-weight: 400; color: var(--lunar-90); line-height: 1.5; margin-bottom: 6px; }
+    .notes-workshop { font-size: 12px; color: var(--lunar-40); }
+    .notes-area {
+      width: 100%; min-height: 55vh; background: var(--card); border: 1px solid var(--lunar-07);
+      border-radius: 14px; color: var(--lunar); font-family: var(--font-sans); font-size: 15px;
+      font-weight: 400; padding: 24px; line-height: 1.8; outline: none; resize: vertical;
+      transition: border-color 0.3s;
+    }
+    .notes-area:focus { border-color: var(--lavender-20); }
+    .notes-area::placeholder { color: var(--lunar-40); }
+    .save-indicator { font-size: 12px; color: var(--lunar-40); margin-top: 10px; text-align: right; transition: color 0.3s; }
+    .save-indicator.saved { color: var(--green); }
+    .save-indicator.saving { color: var(--gold); }
+    .save-indicator.error { color: #c44; }
+
+    /* ─── BACK LINK ─── */
+    .back-link { font-size: 13px; color: var(--lunar-40); transition: color 0.3s; cursor: pointer; background: none; border: none; font-family: var(--font-sans); }
+    .back-link:hover { color: var(--gold); }
+
+    /* ─── PIN OVERLAY ─── */
+    .pin-overlay {
+      position: fixed; inset: 0; background: var(--cosmic); display: flex; align-items: center;
+      justify-content: center; flex-direction: column; z-index: 200;
+    }
+    .pin-label { font-size: 10px; font-weight: 600; letter-spacing: 4px; text-transform: uppercase; color: var(--lavender); margin-bottom: 24px; }
+    .pin-input {
+      width: 200px; text-align: center; background: var(--card); border: 1px solid var(--lunar-07);
+      border-radius: 10px; color: var(--lunar); font-family: var(--font-sans); font-size: 24px;
+      font-weight: 300; padding: 14px; letter-spacing: 8px; outline: none;
+    }
+    .pin-input:focus { border-color: var(--lavender-20); }
+    .pin-error { color: #c44; font-size: 13px; margin-top: 12px; }
+
+    /* ─── DASHBOARD ─── */
+    .dash-stats { display: flex; gap: 32px; justify-content: center; margin-bottom: 28px; }
+    .dash-stat-num { font-family: var(--font-serif); font-size: 32px; font-weight: 500; color: var(--gold); text-align: center; }
+    .dash-stat-label { font-size: 10px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--lunar-40); text-align: center; }
+    .dash-dl-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 40px; }
+    .btn-download {
+      background: transparent; border: 1px solid var(--gold-40); color: var(--gold);
+      font-family: var(--font-sans); font-size: 12px; font-weight: 500; letter-spacing: 1px;
+      padding: 10px 22px; cursor: pointer; transition: all 0.2s; border-radius: 8px;
+    }
+    .btn-download:hover { background: var(--gold-08); border-color: var(--gold); }
+    .dash-section { margin-bottom: 36px; }
+    .dash-workshop-title { font-family: var(--font-serif); font-size: 22px; font-weight: 500; color: var(--gold); margin-bottom: 14px; }
+    .dash-question { background: var(--card); border: 1px solid var(--lunar-07); border-radius: 10px; padding: 18px 22px; margin-bottom: 10px; }
+    .dash-question-text { font-size: 14px; color: var(--lunar-60); margin-bottom: 10px; line-height: 1.6; }
+    .dash-team { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--lunar-07); cursor: pointer; transition: background 0.2s; }
+    .dash-team:last-child { border-bottom: none; }
+    .dash-team:hover { background: var(--elevated); margin: 0 -8px; padding-left: 8px; padding-right: 8px; border-radius: 6px; }
+    .dash-team-name { font-size: 14px; color: var(--lunar); font-weight: 500; }
+    .dash-team-preview { font-size: 12px; color: var(--lunar-40); max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dash-team-time { font-size: 11px; color: var(--lunar-40); }
+
+    /* ─── FOOTER ─── */
+    .ft {
+      position: relative; z-index: 1; max-width: var(--max-w); margin: 0 auto;
+      padding: 36px clamp(24px, 5vw, 64px) 56px;
+      border-top: 1px solid var(--lunar-07);
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px;
+      font-size: 11px; color: var(--lunar-40); letter-spacing: 0.5px;
+    }
+
+    /* ─── REVEAL ─── */
+    .r { opacity: 0; transform: translateY(24px); transition: opacity 0.9s cubic-bezier(0.22,1,0.36,1), transform 0.9s cubic-bezier(0.22,1,0.36,1); }
+    .r.v { opacity: 1; transform: none; }
+    .r-d1 { transition-delay: 0.08s; }
+    .r-d2 { transition-delay: 0.16s; }
+    .r-d3 { transition-delay: 0.24s; }
+    .r-d4 { transition-delay: 0.32s; }
+
+    @media (max-width: 720px) {
+      .header-inner { flex-direction: column; gap: 6px; align-items: flex-start; height: auto; padding-top: 12px; padding-bottom: 12px; }
+      .site-header { height: auto; }
+      .notes-area { min-height: 45vh; padding: 16px; }
+    }
+  </style>
 </head>
 <body>
-<div id="app"></div>
 
-<!-- Supabase JS client -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<!-- JSZip for export -->
-<script src="https://cdn.jsdelivr.net/npm/jszip@3/dist/jszip.min.js"></script>
-<!-- DOMPurify for XSS protection -->
-<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
-<!-- SheetJS for Excel export -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<!-- docx.js for Word export -->
-<script src="https://cdn.jsdelivr.net/npm/docx@8/build/index.umd.min.js"></script>
+  <!-- STICKY HEADER -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="site-title-group" data-action="go-home">
+        <img src="assets/logo.png" alt="" class="site-logo">
+        <span class="site-title">Embodied Minds Summit</span>
+      </div>
+      <button class="header-admin" id="admin-btn">Organizer</button>
+    </div>
+  </header>
 
-<script>
-// ================================================================
-//  SUPABASE CONFIG
-// ================================================================
-const SB_URL = 'https://yaqduwagdixcaifbsshk.supabase.co';
-const SB_KEY = 'sb_publishable_gZS4HBAWTj1r6jk48XYKEw_SqIY3lhw';
-const sb = supabase.createClient(SB_URL, SB_KEY);
+  <main class="wrap" id="app">
+    <!-- Dynamic content rendered here -->
+  </main>
 
+  <footer class="ft">
+    <div>&copy; 2026 Embodied Minds Summit</div>
+    <div>UCLA Luskin Conference Center</div>
+  </footer>
+
+  <!-- Supabase JS client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <!-- JSZip for export -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3/dist/jszip.min.js"></script>
+  <!-- DOMPurify for XSS protection -->
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+  <!-- SheetJS for Excel export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- docx.js for Word export -->
+  <script src="https://cdn.jsdelivr.net/npm/docx@8/build/index.umd.min.js"></script>
+
+  <script>
 // ================================================================
-//  SANITIZATION HELPER
+//  CONFIG
 // ================================================================
-// All user-generated content (team names, notes) is sanitized via
-// DOMPurify before rendering. The esc() function strips all HTML
-// tags and attributes, returning plain text safe for innerHTML.
-// The textarea value is set via DOM property (ta.value = ST.notes),
-// NOT via innerHTML, to prevent XSS.
+var SB_URL = 'https://yaqduwagdixcaifbsshk.supabase.co';
+var SB_KEY = 'sb_publishable_gZS4HBAWTj1r6jk48XYKEw_SqIY3lhw';
+var sb = supabase.createClient(SB_URL, SB_KEY);
+
 function esc(str) {
   return DOMPurify.sanitize(str, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
 }
 
 // ================================================================
-//  APP STATE
+//  STATE
 // ================================================================
-const ST = {
-  screen: 'home',        // home | questions | team-entry | notes | dashboard | pin
-  workshops: [],
-  questions: [],
-  selectedWorkshop: null,
-  selectedQuestion: null,
-  teamName: '',
-  teamId: null,
-  notes: '',
+var ST = {
+  screen: 'home',
+  workshops: [], questions: [],
+  selectedWorkshop: null, selectedQuestion: null,
+  teamName: '', teamId: null, notes: '',
   existingTeams: [],
-  saveStatus: 'saved',   // saved | saving | error
-  saveTimer: null,
-  localStorageKey: null,
-  realtimeSub: null,
-  allTeams: [],           // for dashboard
+  saveStatus: 'saved', saveTimer: null, localStorageKey: null,
+  realtimeSub: null, allTeams: []
 };
 
 // ================================================================
-//  DATA LOADING
+//  DATA
 // ================================================================
 async function loadWorkshops() {
-  const { data, error } = await sb.from('workshops').select('*').order('sort_order');
-  if (error) { console.error('Failed to load workshops:', error); return; }
-  ST.workshops = data;
+  var res = await sb.from('workshops').select('*').order('sort_order');
+  if (res.data) ST.workshops = res.data;
 }
 
 async function loadQuestions(workshopId) {
-  const { data, error } = await sb.from('questions').select('*').eq('workshop_id', workshopId).order('sort_order');
-  if (error) { console.error('Failed to load questions:', error); return; }
-  ST.questions = data;
+  var res = await sb.from('questions').select('*').eq('workshop_id', workshopId).order('sort_order');
+  if (res.data) ST.questions = res.data;
 }
 
 async function loadExistingTeams(questionId) {
-  const { data, error } = await sb.from('teams').select('id, team_name, updated_at').eq('question_id', questionId).order('created_at');
-  if (error) { console.error('Failed to load teams:', error); return; }
-  ST.existingTeams = data;
+  var res = await sb.from('teams').select('id, team_name, updated_at').eq('question_id', questionId).order('created_at');
+  if (res.data) ST.existingTeams = res.data;
 }
 
 async function loadOrCreateTeam(questionId, teamName) {
-  // Check if team already exists
-  const { data: existing } = await sb.from('teams')
-    .select('*')
-    .eq('question_id', questionId)
-    .eq('team_name', teamName)
-    .limit(1);
-
-  if (existing && existing.length > 0) {
-    return existing[0];
-  }
-
-  // Create new team
-  const { data, error } = await sb.from('teams')
-    .insert({ question_id: questionId, team_name: teamName })
-    .select()
-    .single();
-
-  if (error) { console.error('Failed to create team:', error); return null; }
-  return data;
+  var res = await sb.from('teams').select('*').eq('question_id', questionId).eq('team_name', teamName).limit(1);
+  if (res.data && res.data.length > 0) return res.data[0];
+  var ins = await sb.from('teams').insert({ question_id: questionId, team_name: teamName }).select().single();
+  if (ins.error) { console.error('Failed to create team:', ins.error); return null; }
+  return ins.data;
 }
 
 // ================================================================
 //  RENDERING
 // ================================================================
-// All render functions use esc() (DOMPurify) to sanitize any
-// user-generated content before placing it in markup. Static
-// markup and admin-controlled DB content are also escaped for
-// defense-in-depth. The notes textarea value is set via the DOM
-// property (ta.value) after innerHTML assignment to avoid XSS.
+var app;
 function render() {
-  const app = document.getElementById('app');
+  app = document.getElementById('app');
   switch (ST.screen) {
-    case 'home':       app.innerHTML = renderHome(); break;
-    case 'questions':  app.innerHTML = renderQuestions(); break;
-    case 'team-entry': app.innerHTML = renderTeamEntry(); break;
+    case 'home':       app.innerHTML = renderHome(); initReveal(); initTileGlow(); break;
+    case 'questions':  app.innerHTML = renderQuestions(); initReveal(); break;
+    case 'team-entry': app.innerHTML = renderTeamEntry(); initReveal(); break;
     case 'notes':      app.innerHTML = renderNotes(); break;
-    case 'pin':        app.innerHTML = renderPin(); break;
+    case 'pin':        renderPin(); break;
     case 'dashboard':  app.innerHTML = renderDashboard(); break;
   }
-  // SECURITY: Set textarea value via DOM property (not innerHTML) to prevent XSS
   if (ST.screen === 'notes') {
-    const ta = document.getElementById('notes-textarea');
+    var ta = document.getElementById('notes-textarea');
     if (ta) ta.value = ST.notes;
   }
   attachListeners();
 }
 
 function renderHome() {
-  return '<div class="screen">'
-    + '<span class="mark" onclick="goPin()">&#9672;</span>'
-    + '<p class="eyebrow">Embodied Minds &middot; Pre-Conference Salon</p>'
-    + '<h1 class="title">Workshop <em>Notes</em></h1>'
-    + '<p class="subtitle">Capture your group\'s insights and ideas. Select your workshop session to begin.</p>'
-    + '<div class="card-grid">'
-    + ST.workshops.map(function(w) {
-        return '<div class="card" data-action="select-workshop" data-id="' + esc(w.id) + '">'
-          + '<div class="card-title">' + esc(w.title) + '</div>'
-          + '</div>';
-      }).join('')
+  var tiles = ST.workshops.map(function(w, i) {
+    var subtitle = esc(w.title).replace(/^Workshop [IVX]+ — /, '');
+    var numeral = esc(w.title).match(/^(Workshop [IVX]+)/);
+    return '<div class="tile r r-d' + (i + 1) + '" data-action="select-workshop" data-id="' + esc(w.id) + '">'
+      + '<div class="tile-label">' + (numeral ? esc(numeral[1]) : '') + '</div>'
+      + '<h3>' + esc(subtitle) + '</h3>'
+      + '<p>Breakout discussion notes for this workshop session.</p>'
+      + '<span class="tile-cta">Start Notes <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg></span>'
+      + '</div>';
+  }).join('');
+
+  return '<div class="page-header r">'
+    + '<div class="lbl">Breakout Sessions</div>'
+    + '<h1>Workshop Notes</h1>'
+    + '<p>Capture your breakout group\'s insights and ideas. Select a workshop session to begin taking notes.</p>'
+    + '<div class="date-badge">Sunday, May 3, 2026 &middot; UCLA Luskin Conference Center</div>'
     + '</div>'
-    + '</div>';
+    + '<div class="workshop-grid">' + tiles + '</div>';
 }
 
 function renderQuestions() {
   var w = ST.workshops.find(function(w) { return w.id === ST.selectedWorkshop; });
-  return '<div class="screen">'
-    + '<button class="btn-back" data-action="go-home">&larr; Back</button>'
-    + '<p class="eyebrow">' + (w ? esc(w.title) : 'Workshop') + '</p>'
-    + '<h1 class="title">Choose your <em>question</em></h1>'
-    + '<p class="subtitle">Your group will explore one of these questions together.</p>'
-    + '<div class="card-grid">'
-    + ST.questions.map(function(q, i) {
-        return '<div class="card" data-action="select-question" data-id="' + esc(q.id) + '">'
-          + '<div class="card-title">Question ' + (i + 1) + '</div>'
-          + '<div class="card-sub">' + esc(q.text) + '</div>'
-          + '</div>';
-      }).join('')
+  var cards = ST.questions.map(function(q, i) {
+    return '<div class="q-card r r-d' + (i + 1) + '" data-action="select-question" data-id="' + esc(q.id) + '">'
+      + '<div class="q-card-label">Question ' + (i + 1) + '</div>'
+      + '<div class="q-card-text">' + esc(q.text) + '</div>'
+      + '</div>';
+  }).join('');
+
+  return '<div style="margin-bottom:32px"><button class="back-link" data-action="go-home">&larr; Back to workshops</button></div>'
+    + '<div class="page-header r">'
+    + '<div class="lbl">' + (w ? esc(w.title) : '') + '</div>'
+    + '<h1>Choose Your Question</h1>'
+    + '<p>Your group will explore one of these questions together. Select the question assigned to your breakout group.</p>'
     + '</div>'
-    + '</div>';
+    + '<div class="question-grid" style="max-width:800px;margin:0 auto">' + cards + '</div>';
 }
 
 function renderTeamEntry() {
   var q = ST.questions.find(function(q) { return q.id === ST.selectedQuestion; });
   var teamsHtml = '';
   if (ST.existingTeams.length > 0) {
-    teamsHtml = '<div class="existing-teams">'
-      + '<p class="existing-teams-label">Existing teams on this question:</p>'
+    teamsHtml = '<div class="existing-teams r r-d2">'
+      + '<p class="existing-teams-label">Join an existing team:</p>'
       + ST.existingTeams.map(function(t) {
           return '<span class="team-chip" data-action="join-team" data-id="' + esc(t.id) + '" data-name="' + esc(t.team_name) + '">' + esc(t.team_name) + '</span>';
         }).join('')
       + '</div>';
   }
-  return '<div class="screen">'
-    + '<button class="btn-back" data-action="go-questions">&larr; Back</button>'
-    + '<p class="eyebrow">Your Question</p>'
-    + '<p class="question-display">' + (q ? esc(q.text) : '') + '</p>'
-    + '<p class="subtitle" style="margin-top:24px">Join an existing team or create a new one.</p>'
+
+  return '<div style="margin-bottom:32px"><button class="back-link" data-action="go-questions">&larr; Back to questions</button></div>'
+    + '<div class="team-section">'
+    + '<div class="r"><div class="team-question-text">' + (q ? esc(q.text) : '') + '</div></div>'
     + teamsHtml
-    + '<button class="btn-primary" id="create-team-btn">Create New Team (Team ' + (ST.existingTeams.length + 1) + ') &rarr;</button>'
+    + '<div class="r r-d3" style="text-align:center;margin-top:20px">'
+    + '<button class="btn-create" id="create-team-btn">Create New Team (Team ' + (ST.existingTeams.length + 1) + ')</button>'
+    + '</div>'
     + '</div>';
 }
 
@@ -332,75 +421,96 @@ function renderNotes() {
   var w = ST.workshops.find(function(w) { return w.id === ST.selectedWorkshop; });
   var statusText = ST.saveStatus === 'saved' ? 'All changes saved' :
                    ST.saveStatus === 'saving' ? 'Saving...' : 'Save failed — retrying...';
-  // Note: textarea value is set via DOM property in render(), not here
-  return '<div class="screen">'
-    + '<button class="btn-back" data-action="go-home">&larr; Leave notes</button>'
-    + '<p class="eyebrow">' + esc(ST.teamName) + '</p>'
-    + '<p class="question-display">' + (q ? esc(q.text) : '') + '</p>'
-    + '<div class="team-display">' + (w ? esc(w.title) : '') + '</div>'
-    + '<textarea class="notes-area" id="notes-textarea" placeholder="Start typing your notes here..."></textarea>'
+  return '<div style="margin-bottom:24px"><button class="back-link" data-action="go-home">&larr; Leave notes</button></div>'
+    + '<div class="notes-wrap">'
+    + '<div class="notes-meta">'
+    + '<div class="notes-team">' + esc(ST.teamName) + '</div>'
+    + '<div class="notes-question">' + (q ? esc(q.text) : '') + '</div>'
+    + '<div class="notes-workshop">' + (w ? esc(w.title) : '') + '</div>'
+    + '</div>'
+    + '<textarea class="notes-area" id="notes-textarea" placeholder="Start typing your group\'s notes here..."></textarea>'
     + '<div class="save-indicator ' + ST.saveStatus + '" id="save-indicator">' + statusText + '</div>'
     + '</div>';
 }
 
 function renderPin() {
-  return '<div class="pin-overlay">'
-    + '<p class="eyebrow" style="margin-bottom:24px">Organizer Access</p>'
+  var overlay = document.createElement('div');
+  overlay.className = 'pin-overlay';
+  overlay.id = 'pin-overlay';
+  overlay.innerHTML = '<div class="pin-label">Organizer Access</div>'
     + '<input type="password" class="pin-input" id="pin-input" maxlength="4" placeholder="PIN" inputmode="numeric"/>'
     + '<div class="pin-error" id="pin-error" style="display:none">Incorrect PIN</div>'
-    + '<button class="btn-back" style="margin-top:24px" data-action="go-home">&larr; Back</button>'
-    + '</div>';
+    + '<button class="back-link" style="margin-top:24px" data-action="go-home">&larr; Back</button>';
+  document.body.appendChild(overlay);
+}
+
+function removePin() {
+  var el = document.getElementById('pin-overlay');
+  if (el) el.remove();
 }
 
 function renderDashboard() {
   var totalTeams = ST.allTeams.length;
   var activeTeams = ST.allTeams.filter(function(t) { return t.notes.trim().length > 0; }).length;
-  var sectionsHtml = ST.workshops.map(function(w) {
-    var wQuestions = ST.questions.filter(function(q) { return q.workshop_id === w.id; });
-    if (wQuestions.length === 0) return '';
+  var sections = ST.workshops.map(function(w) {
+    var wQ = ST.questions.filter(function(q) { return q.workshop_id === w.id; });
+    if (!wQ.length) return '';
     return '<div class="dash-section">'
       + '<div class="dash-workshop-title">' + esc(w.title) + '</div>'
-      + wQuestions.map(function(q) {
-          var qTeams = ST.allTeams.filter(function(t) { return t.question_id === q.id; });
-          var teamsContent = qTeams.length === 0
-            ? '<div style="font-size:12px;color:var(--lunar-30);padding:4px 0">No teams yet</div>'
-            : qTeams.map(function(t) {
+      + wQ.map(function(q) {
+          var qT = ST.allTeams.filter(function(t) { return t.question_id === q.id; });
+          var inner = qT.length === 0
+            ? '<div style="font-size:12px;color:var(--lunar-40);padding:4px 0">No teams yet</div>'
+            : qT.map(function(t) {
                 return '<div class="dash-team" data-action="view-team-notes" data-id="' + esc(t.id) + '">'
                   + '<span class="dash-team-name">' + esc(t.team_name) + '</span>'
                   + '<span class="dash-team-preview">' + (esc(t.notes.substring(0, 80)) || '(empty)') + '</span>'
                   + '<span class="dash-team-time">' + new Date(t.updated_at).toLocaleTimeString() + '</span>'
                   + '</div>';
               }).join('');
-          return '<div class="dash-question">'
-            + '<div class="dash-question-text">' + esc(q.text) + '</div>'
-            + teamsContent
-            + '</div>';
+          return '<div class="dash-question"><div class="dash-question-text">' + esc(q.text) + '</div>' + inner + '</div>';
         }).join('')
       + '</div>';
   }).join('');
 
-  return '<div class="screen">'
-    + '<button class="btn-back" data-action="go-home">&larr; Back to home</button>'
-    + '<p class="eyebrow">Organizer Dashboard</p>'
-    + '<h1 class="title">Live <em>Notes</em></h1>'
+  return '<div style="margin-bottom:32px"><button class="back-link" data-action="go-home">&larr; Back to home</button></div>'
+    + '<div class="page-header"><div class="lbl">Organizer Dashboard</div><h1>Live Notes</h1></div>'
     + '<div class="dash-stats">'
-    + '<div class="dash-stat"><div class="dash-stat-num">' + totalTeams + '</div><div class="dash-stat-label">Teams</div></div>'
-    + '<div class="dash-stat"><div class="dash-stat-num">' + activeTeams + '</div><div class="dash-stat-label">With Notes</div></div>'
+    + '<div><div class="dash-stat-num">' + totalTeams + '</div><div class="dash-stat-label">Teams</div></div>'
+    + '<div><div class="dash-stat-num">' + activeTeams + '</div><div class="dash-stat-label">With Notes</div></div>'
     + '</div>'
-    + '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:32px">'
+    + '<div class="dash-dl-row">'
     + '<button class="btn-download" id="download-btn">Markdown (ZIP)</button>'
     + '<button class="btn-download" id="download-excel-btn">Excel (.xlsx)</button>'
     + '<button class="btn-download" id="download-word-btn">Word (.docx)</button>'
     + '</div>'
-    + sectionsHtml
-    + '</div>';
+    + sections;
 }
 
 // ================================================================
-//  EVENT LISTENERS & NAVIGATION
+//  REVEAL & GLOW
+// ================================================================
+function initReveal() {
+  var io = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) { if (e.isIntersecting) { e.target.classList.add('v'); io.unobserve(e.target); } });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.r').forEach(function(el) { io.observe(el); });
+}
+
+function initTileGlow() {
+  document.querySelectorAll('.tile').forEach(function(tile) {
+    tile.addEventListener('pointermove', function(e) {
+      var rect = tile.getBoundingClientRect();
+      tile.style.setProperty('--mx', ((e.clientX - rect.left) / rect.width * 100) + '%');
+      tile.style.setProperty('--my', ((e.clientY - rect.top) / rect.height * 100) + '%');
+    });
+  });
+}
+
+// ================================================================
+//  LISTENERS
 // ================================================================
 function attachListeners() {
-  // Workshop selection
   document.querySelectorAll('[data-action="select-workshop"]').forEach(function(el) {
     el.addEventListener('click', async function() {
       ST.selectedWorkshop = el.dataset.id;
@@ -410,7 +520,6 @@ function attachListeners() {
     });
   });
 
-  // Question selection
   document.querySelectorAll('[data-action="select-question"]').forEach(function(el) {
     el.addEventListener('click', async function() {
       ST.selectedQuestion = el.dataset.id;
@@ -420,7 +529,6 @@ function attachListeners() {
     });
   });
 
-  // Join existing team
   document.querySelectorAll('[data-action="join-team"]').forEach(function(el) {
     el.addEventListener('click', async function() {
       ST.teamId = el.dataset.id;
@@ -429,12 +537,10 @@ function attachListeners() {
     });
   });
 
-  // Auto-assign team number
   var createBtn = document.getElementById('create-team-btn');
   if (createBtn) {
     createBtn.addEventListener('click', async function() {
-      var teamNum = ST.existingTeams.length + 1;
-      var name = 'Team ' + teamNum;
+      var name = 'Team ' + (ST.existingTeams.length + 1);
       var team = await loadOrCreateTeam(ST.selectedQuestion, name);
       if (!team) return;
       ST.teamId = team.id;
@@ -443,11 +549,9 @@ function attachListeners() {
       ST.screen = 'notes';
       ST.localStorageKey = 'em-notes-' + ST.teamId;
       render();
-      setupAutoSave();
     });
   }
 
-  // Notes textarea
   var textarea = document.getElementById('notes-textarea');
   if (textarea) {
     textarea.addEventListener('input', function() {
@@ -458,12 +562,12 @@ function attachListeners() {
     textarea.focus();
   }
 
-  // PIN input
   var pinInput = document.getElementById('pin-input');
   if (pinInput) {
     pinInput.focus();
     pinInput.addEventListener('input', async function() {
       if (pinInput.value === '2026') {
+        removePin();
         await loadDashboardData();
         ST.screen = 'dashboard';
         render();
@@ -474,7 +578,6 @@ function attachListeners() {
     });
   }
 
-  // Download button
   var dlBtn = document.getElementById('download-btn');
   if (dlBtn) dlBtn.addEventListener('click', downloadZip);
   var dlExcel = document.getElementById('download-excel-btn');
@@ -482,19 +585,13 @@ function attachListeners() {
   var dlWord = document.getElementById('download-word-btn');
   if (dlWord) dlWord.addEventListener('click', downloadWord);
 
-  // Back buttons
   document.querySelectorAll('[data-action="go-home"]').forEach(function(el) {
-    el.addEventListener('click', function() {
-      cleanupNotes();
-      ST.screen = 'home';
-      render();
-    });
+    el.addEventListener('click', function() { cleanupNotes(); removePin(); ST.screen = 'home'; render(); });
   });
   document.querySelectorAll('[data-action="go-questions"]').forEach(function(el) {
     el.addEventListener('click', function() { ST.screen = 'questions'; render(); });
   });
 
-  // View team notes from dashboard
   document.querySelectorAll('[data-action="view-team-notes"]').forEach(function(el) {
     el.addEventListener('click', function() {
       var team = ST.allTeams.find(function(t) { return t.id === el.dataset.id; });
@@ -503,42 +600,35 @@ function attachListeners() {
   });
 }
 
-async function enterNotes() {
-  // Load the team's existing notes
-  var { data } = await sb.from('teams').select('*').eq('id', ST.teamId).single();
-  if (data) ST.notes = data.notes || '';
+// Header listeners (persistent)
+document.querySelector('.site-title-group').addEventListener('click', function() {
+  cleanupNotes(); removePin(); ST.screen = 'home'; render();
+});
+document.getElementById('admin-btn').addEventListener('click', function() {
+  ST.screen = 'pin'; render();
+});
 
-  // Check localStorage for unsaved notes
+async function enterNotes() {
+  var res = await sb.from('teams').select('*').eq('id', ST.teamId).single();
+  if (res.data) ST.notes = res.data.notes || '';
   ST.localStorageKey = 'em-notes-' + ST.teamId;
   var local = localStorage.getItem(ST.localStorageKey);
-  if (local && local.length > ST.notes.length) {
-    ST.notes = local; // Recover from offline buffer
-  }
-
+  if (local && local.length > ST.notes.length) ST.notes = local;
   ST.screen = 'notes';
-  render();
-  setupAutoSave();
-}
-
-function goPin() {
-  ST.screen = 'pin';
   render();
 }
 
 function cleanupNotes() {
   if (ST.saveTimer) clearTimeout(ST.saveTimer);
   if (ST.realtimeSub) { ST.realtimeSub.unsubscribe(); ST.realtimeSub = null; }
-  ST.teamId = null;
-  ST.notes = '';
-  ST.localStorageKey = null;
+  ST.teamId = null; ST.notes = ''; ST.localStorageKey = null;
 }
 
 // ================================================================
 //  AUTO-SAVE
 // ================================================================
 function debounceSave() {
-  ST.saveStatus = 'saving';
-  updateSaveIndicator();
+  ST.saveStatus = 'saving'; updateSaveIndicator();
   if (ST.saveTimer) clearTimeout(ST.saveTimer);
   ST.saveTimer = setTimeout(function() { saveNotes(); }, 2000);
 }
@@ -546,18 +636,13 @@ function debounceSave() {
 async function saveNotes() {
   if (!ST.teamId) return;
   try {
-    var { error } = await sb.from('teams')
-      .update({ notes: ST.notes, updated_at: new Date().toISOString() })
-      .eq('id', ST.teamId);
-
-    if (error) throw error;
+    var res = await sb.from('teams').update({ notes: ST.notes, updated_at: new Date().toISOString() }).eq('id', ST.teamId);
+    if (res.error) throw res.error;
     ST.saveStatus = 'saved';
-    // Clear localStorage on successful save
     if (ST.localStorageKey) localStorage.removeItem(ST.localStorageKey);
   } catch (e) {
     console.error('Save failed:', e);
     ST.saveStatus = 'error';
-    // Retry in 5 seconds
     ST.saveTimer = setTimeout(function() { saveNotes(); }, 5000);
   }
   updateSaveIndicator();
@@ -571,29 +656,20 @@ function updateSaveIndicator() {
                    ST.saveStatus === 'saving' ? 'Saving...' : 'Save failed — retrying...';
 }
 
-function setupAutoSave() {
-  // Nothing extra needed — input listener already calls debounceSave
-}
-
 // ================================================================
 //  DASHBOARD
 // ================================================================
 async function loadDashboardData() {
-  // Load all questions (for all workshops)
-  var { data: allQ } = await sb.from('questions').select('*').order('sort_order');
-  if (allQ) ST.questions = allQ;
+  var qRes = await sb.from('questions').select('*').order('sort_order');
+  if (qRes.data) ST.questions = qRes.data;
+  var tRes = await sb.from('teams').select('*').order('created_at');
+  if (tRes.data) ST.allTeams = tRes.data;
 
-  // Load all teams
-  var { data: allT } = await sb.from('teams').select('*').order('created_at');
-  if (allT) ST.allTeams = allT;
-
-  // Subscribe to realtime changes on teams table
   if (ST.realtimeSub) ST.realtimeSub.unsubscribe();
   ST.realtimeSub = sb.channel('dashboard-teams')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'teams' }, function(payload) {
-      if (payload.eventType === 'INSERT') {
-        ST.allTeams.push(payload.new);
-      } else if (payload.eventType === 'UPDATE') {
+      if (payload.eventType === 'INSERT') ST.allTeams.push(payload.new);
+      else if (payload.eventType === 'UPDATE') {
         var idx = ST.allTeams.findIndex(function(t) { return t.id === payload.new.id; });
         if (idx >= 0) ST.allTeams[idx] = payload.new;
       } else if (payload.eventType === 'DELETE') {
@@ -610,45 +686,26 @@ async function loadDashboardData() {
 async function downloadZip() {
   var zip = new JSZip();
   var root = zip.folder('Embodied-Minds-Notes');
-
   for (var wi = 0; wi < ST.workshops.length; wi++) {
     var w = ST.workshops[wi];
-    var wNum = String(wi + 1).padStart(2, '0');
-    var wName = wNum + '-' + w.title.replace(/[^a-zA-Z0-9 ]/g, '').replace(/ /g, '-');
-    var wFolder = root.folder(wName);
-    var wQuestions = ST.questions.filter(function(q) { return q.workshop_id === w.id; });
-    wQuestions.sort(function(a, b) { return a.sort_order - b.sort_order; });
-
-    for (var qi = 0; qi < wQuestions.length; qi++) {
-      var q = wQuestions[qi];
-      var qNum = String(qi + 1).padStart(2, '0');
-      var qName = qNum + '-' + q.short_title + '-' + q.text.substring(0, 40).replace(/[^a-zA-Z0-9 ]/g, '').trim().replace(/ /g, '-');
-      var qFolder = wFolder.folder(qName);
-      var qTeams = ST.allTeams.filter(function(t) { return t.question_id === q.id; });
-
-      for (var ti = 0; ti < qTeams.length; ti++) {
-        var t = qTeams[ti];
-        var content = '# ' + q.text + '\n\n'
-          + '**Team:** ' + t.team_name + '\n'
-          + '**Workshop:** ' + w.title + '\n'
-          + '**Last updated:** ' + new Date(t.updated_at).toLocaleString() + '\n\n'
-          + '---\n\n'
-          + (t.notes || '(no notes)');
-        var fileName = t.team_name.replace(/[^a-zA-Z0-9 ]/g, '').replace(/ /g, '-') + '.md';
-        qFolder.file(fileName, content);
+    var wFolder = root.folder(String(wi+1).padStart(2,'0') + '-' + w.title.replace(/[^a-zA-Z0-9 ]/g, '').replace(/ /g, '-'));
+    var wQ = ST.questions.filter(function(q) { return q.workshop_id === w.id; });
+    wQ.sort(function(a, b) { return a.sort_order - b.sort_order; });
+    for (var qi = 0; qi < wQ.length; qi++) {
+      var q = wQ[qi];
+      var qFolder = wFolder.folder(String(qi+1).padStart(2,'0') + '-' + q.short_title);
+      var qT = ST.allTeams.filter(function(t) { return t.question_id === q.id; });
+      for (var ti = 0; ti < qT.length; ti++) {
+        var t = qT[ti];
+        qFolder.file(t.team_name.replace(/[^a-zA-Z0-9 ]/g,'').replace(/ /g,'-') + '.md',
+          '# ' + q.text + '\n\n**Team:** ' + t.team_name + '\n**Workshop:** ' + w.title + '\n**Last updated:** ' + new Date(t.updated_at).toLocaleString() + '\n\n---\n\n' + (t.notes || '(no notes)'));
       }
     }
   }
-
   var blob = await zip.generateAsync({ type: 'blob' });
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement('a');
-  a.href = url;
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
   a.download = 'Embodied-Minds-Notes-' + new Date().toISOString().split('T')[0] + '.zip';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
 
 // ================================================================
@@ -657,26 +714,16 @@ async function downloadZip() {
 function downloadExcel() {
   var rows = [];
   ST.workshops.forEach(function(w) {
-    var wQuestions = ST.questions.filter(function(q) { return q.workshop_id === w.id; });
-    wQuestions.sort(function(a, b) { return a.sort_order - b.sort_order; });
-    wQuestions.forEach(function(q) {
-      var qTeams = ST.allTeams.filter(function(t) { return t.question_id === q.id; });
-      qTeams.forEach(function(t) {
-        rows.push({
-          'Workshop': w.title,
-          'Question': q.text,
-          'Team': t.team_name,
-          'Notes': t.notes || '',
-          'Last Updated': new Date(t.updated_at).toLocaleString()
-        });
+    var wQ = ST.questions.filter(function(q) { return q.workshop_id === w.id; });
+    wQ.sort(function(a, b) { return a.sort_order - b.sort_order; });
+    wQ.forEach(function(q) {
+      ST.allTeams.filter(function(t) { return t.question_id === q.id; }).forEach(function(t) {
+        rows.push({ Workshop: w.title, Question: q.text, Team: t.team_name, Notes: t.notes || '', 'Last Updated': new Date(t.updated_at).toLocaleString() });
       });
     });
   });
-  if (rows.length === 0) {
-    rows.push({ 'Workshop': '', 'Question': '', 'Team': '', 'Notes': 'No notes yet', 'Last Updated': '' });
-  }
+  if (!rows.length) rows.push({ Workshop: '', Question: '', Team: '', Notes: 'No notes yet', 'Last Updated': '' });
   var ws = XLSX.utils.json_to_sheet(rows);
-  // Set column widths
   ws['!cols'] = [{ wch: 40 }, { wch: 60 }, { wch: 15 }, { wch: 80 }, { wch: 20 }];
   var wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Workshop Notes');
@@ -687,74 +734,33 @@ function downloadExcel() {
 //  WORD EXPORT
 // ================================================================
 async function downloadWord() {
-  var children = [];
-  var D = docx;
-
-  children.push(new D.Paragraph({
-    children: [new D.TextRun({ text: 'Embodied Minds Workshop Notes', bold: true, size: 48, font: 'Georgia' })],
-    spacing: { after: 200 }
-  }));
-  children.push(new D.Paragraph({
-    children: [new D.TextRun({ text: 'Pre-Conference Salon · ' + new Date().toLocaleDateString(), size: 24, color: '666666' })],
-    spacing: { after: 400 }
-  }));
-
+  var D = docx, children = [];
+  children.push(new D.Paragraph({ children: [new D.TextRun({ text: 'Embodied Minds Workshop Notes', bold: true, size: 48, font: 'Georgia' })], spacing: { after: 200 } }));
+  children.push(new D.Paragraph({ children: [new D.TextRun({ text: 'Pre-Conference Salon · ' + new Date().toLocaleDateString(), size: 24, color: '666666' })], spacing: { after: 400 } }));
   ST.workshops.forEach(function(w) {
-    children.push(new D.Paragraph({
-      children: [new D.TextRun({ text: w.title, bold: true, size: 36, font: 'Georgia' })],
-      spacing: { before: 400, after: 200 },
-      heading: D.HeadingLevel.HEADING_1
-    }));
-
-    var wQuestions = ST.questions.filter(function(q) { return q.workshop_id === w.id; });
-    wQuestions.sort(function(a, b) { return a.sort_order - b.sort_order; });
-
-    wQuestions.forEach(function(q, qi) {
-      children.push(new D.Paragraph({
-        children: [new D.TextRun({ text: 'Question ' + (qi + 1) + ': ' + q.text, bold: true, size: 28 })],
-        spacing: { before: 300, after: 150 },
-        heading: D.HeadingLevel.HEADING_2
-      }));
-
-      var qTeams = ST.allTeams.filter(function(t) { return t.question_id === q.id; });
-      if (qTeams.length === 0) {
-        children.push(new D.Paragraph({
-          children: [new D.TextRun({ text: 'No teams yet', italics: true, color: '999999', size: 22 })],
-          spacing: { after: 100 }
-        }));
+    children.push(new D.Paragraph({ children: [new D.TextRun({ text: w.title, bold: true, size: 36, font: 'Georgia' })], spacing: { before: 400, after: 200 }, heading: D.HeadingLevel.HEADING_1 }));
+    var wQ = ST.questions.filter(function(q) { return q.workshop_id === w.id; });
+    wQ.sort(function(a, b) { return a.sort_order - b.sort_order; });
+    wQ.forEach(function(q, qi) {
+      children.push(new D.Paragraph({ children: [new D.TextRun({ text: 'Question ' + (qi+1) + ': ' + q.text, bold: true, size: 28 })], spacing: { before: 300, after: 150 }, heading: D.HeadingLevel.HEADING_2 }));
+      var qT = ST.allTeams.filter(function(t) { return t.question_id === q.id; });
+      if (!qT.length) {
+        children.push(new D.Paragraph({ children: [new D.TextRun({ text: 'No teams yet', italics: true, color: '999999', size: 22 })], spacing: { after: 100 } }));
       } else {
-        qTeams.forEach(function(t) {
-          children.push(new D.Paragraph({
-            children: [new D.TextRun({ text: t.team_name, bold: true, size: 24 })],
-            spacing: { before: 200, after: 50 },
-            heading: D.HeadingLevel.HEADING_3
-          }));
-          // Split notes by newlines into separate paragraphs
-          var lines = (t.notes || '(no notes)').split('\n');
-          lines.forEach(function(line) {
-            children.push(new D.Paragraph({
-              children: [new D.TextRun({ text: line, size: 22 })],
-              spacing: { after: 60 }
-            }));
+        qT.forEach(function(t) {
+          children.push(new D.Paragraph({ children: [new D.TextRun({ text: t.team_name, bold: true, size: 24 })], spacing: { before: 200, after: 50 }, heading: D.HeadingLevel.HEADING_3 }));
+          (t.notes || '(no notes)').split('\n').forEach(function(line) {
+            children.push(new D.Paragraph({ children: [new D.TextRun({ text: line, size: 22 })], spacing: { after: 60 } }));
           });
         });
       }
     });
   });
-
-  var doc = new D.Document({
-    sections: [{ properties: {}, children: children }]
-  });
-
+  var doc = new D.Document({ sections: [{ properties: {}, children: children }] });
   var blob = await D.Packer.toBlob(doc);
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement('a');
-  a.href = url;
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
   a.download = 'Embodied-Minds-Notes-' + new Date().toISOString().split('T')[0] + '.docx';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
 
 // ================================================================
@@ -764,6 +770,7 @@ async function downloadWord() {
   await loadWorkshops();
   render();
 })();
-</script>
+  </script>
+
 </body>
 </html>
