@@ -317,13 +317,9 @@ function renderTeamEntry() {
     + '<button class="btn-back" data-action="go-questions">&larr; Back</button>'
     + '<p class="eyebrow">Your Question</p>'
     + '<p class="question-display">' + (q ? esc(q.text) : '') + '</p>'
-    + '<p class="subtitle" style="margin-top:24px">Enter your team name to start taking notes, or join an existing team.</p>'
+    + '<p class="subtitle" style="margin-top:24px">Join an existing team or create a new one.</p>'
     + teamsHtml
-    + '<div class="input-group">'
-    + '<p class="input-label">New Team Name</p>'
-    + '<input type="text" class="text-input" id="team-name-input" placeholder="e.g. Team Alpha" maxlength="50"/>'
-    + '</div>'
-    + '<button class="btn-primary" id="start-notes-btn" disabled>Start Taking Notes &rarr;</button>'
+    + '<button class="btn-primary" id="create-team-btn">Create New Team (Team ' + (ST.existingTeams.length + 1) + ') &rarr;</button>'
     + '</div>';
 }
 
@@ -425,16 +421,12 @@ function attachListeners() {
     });
   });
 
-  // Team name input
-  var nameInput = document.getElementById('team-name-input');
-  var startBtn = document.getElementById('start-notes-btn');
-  if (nameInput && startBtn) {
-    nameInput.addEventListener('input', function() {
-      startBtn.disabled = nameInput.value.trim().length === 0;
-    });
-    startBtn.addEventListener('click', async function() {
-      var name = nameInput.value.trim();
-      if (!name) return;
+  // Auto-assign team number
+  var createBtn = document.getElementById('create-team-btn');
+  if (createBtn) {
+    createBtn.addEventListener('click', async function() {
+      var teamNum = ST.existingTeams.length + 1;
+      var name = 'Team ' + teamNum;
       var team = await loadOrCreateTeam(ST.selectedQuestion, name);
       if (!team) return;
       ST.teamId = team.id;
@@ -611,13 +603,16 @@ async function downloadZip() {
 
   for (var wi = 0; wi < ST.workshops.length; wi++) {
     var w = ST.workshops[wi];
-    var wName = w.title.replace(/[^a-zA-Z0-9 ]/g, '').replace(/ /g, '-');
+    var wNum = String(wi + 1).padStart(2, '0');
+    var wName = wNum + '-' + w.title.replace(/[^a-zA-Z0-9 ]/g, '').replace(/ /g, '-');
     var wFolder = root.folder(wName);
     var wQuestions = ST.questions.filter(function(q) { return q.workshop_id === w.id; });
+    wQuestions.sort(function(a, b) { return a.sort_order - b.sort_order; });
 
     for (var qi = 0; qi < wQuestions.length; qi++) {
       var q = wQuestions[qi];
-      var qName = q.short_title + '-' + q.text.substring(0, 40).replace(/[^a-zA-Z0-9 ]/g, '').trim().replace(/ /g, '-');
+      var qNum = String(qi + 1).padStart(2, '0');
+      var qName = qNum + '-' + q.short_title + '-' + q.text.substring(0, 40).replace(/[^a-zA-Z0-9 ]/g, '').trim().replace(/ /g, '-');
       var qFolder = wFolder.folder(qName);
       var qTeams = ST.allTeams.filter(function(t) { return t.question_id === q.id; });
 
