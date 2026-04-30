@@ -158,6 +158,10 @@
 <script src="https://cdn.jsdelivr.net/npm/jszip@3/dist/jszip.min.js"></script>
 <!-- DOMPurify for XSS protection -->
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+<!-- SheetJS for Excel export -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!-- docx.js for Word export -->
+<script src="https://cdn.jsdelivr.net/npm/docx@8/build/index.umd.min.js"></script>
 
 <script>
 // ================================================================
@@ -270,10 +274,10 @@ function render() {
 
 function renderHome() {
   return '<div class="screen">'
-    + '<div class="mark" onclick="goPin()">&#9671;</div>'
-    + '<p class="eyebrow">Workshop Notes</p>'
-    + '<h1 class="title">Embodied <em>Minds</em></h1>'
-    + '<p class="subtitle">Select your workshop session to begin taking notes for your group.</p>'
+    + '<span class="mark" onclick="goPin()">&#9672;</span>'
+    + '<p class="eyebrow">Embodied Minds &middot; Pre-Conference Salon</p>'
+    + '<h1 class="title">Workshop <em>Notes</em></h1>'
+    + '<p class="subtitle">Capture your group\'s insights and ideas. Select your workshop session to begin.</p>'
     + '<div class="card-grid">'
     + ST.workshops.map(function(w) {
         return '<div class="card" data-action="select-workshop" data-id="' + esc(w.id) + '">'
@@ -383,7 +387,11 @@ function renderDashboard() {
     + '<div class="dash-stat"><div class="dash-stat-num">' + totalTeams + '</div><div class="dash-stat-label">Teams</div></div>'
     + '<div class="dash-stat"><div class="dash-stat-num">' + activeTeams + '</div><div class="dash-stat-label">With Notes</div></div>'
     + '</div>'
-    + '<button class="btn-download" id="download-btn" style="margin-bottom:32px">Download All Notes (ZIP)</button>'
+    + '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:32px">'
+    + '<button class="btn-download" id="download-btn">Markdown (ZIP)</button>'
+    + '<button class="btn-download" id="download-excel-btn">Excel (.xlsx)</button>'
+    + '<button class="btn-download" id="download-word-btn">Word (.docx)</button>'
+    + '</div>'
     + sectionsHtml
     + '</div>';
 }
@@ -468,9 +476,11 @@ function attachListeners() {
 
   // Download button
   var dlBtn = document.getElementById('download-btn');
-  if (dlBtn) {
-    dlBtn.addEventListener('click', downloadZip);
-  }
+  if (dlBtn) dlBtn.addEventListener('click', downloadZip);
+  var dlExcel = document.getElementById('download-excel-btn');
+  if (dlExcel) dlExcel.addEventListener('click', downloadExcel);
+  var dlWord = document.getElementById('download-word-btn');
+  if (dlWord) dlWord.addEventListener('click', downloadWord);
 
   // Back buttons
   document.querySelectorAll('[data-action="go-home"]').forEach(function(el) {
@@ -635,6 +645,112 @@ async function downloadZip() {
   var a = document.createElement('a');
   a.href = url;
   a.download = 'Embodied-Minds-Notes-' + new Date().toISOString().split('T')[0] + '.zip';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ================================================================
+//  EXCEL EXPORT
+// ================================================================
+function downloadExcel() {
+  var rows = [];
+  ST.workshops.forEach(function(w) {
+    var wQuestions = ST.questions.filter(function(q) { return q.workshop_id === w.id; });
+    wQuestions.sort(function(a, b) { return a.sort_order - b.sort_order; });
+    wQuestions.forEach(function(q) {
+      var qTeams = ST.allTeams.filter(function(t) { return t.question_id === q.id; });
+      qTeams.forEach(function(t) {
+        rows.push({
+          'Workshop': w.title,
+          'Question': q.text,
+          'Team': t.team_name,
+          'Notes': t.notes || '',
+          'Last Updated': new Date(t.updated_at).toLocaleString()
+        });
+      });
+    });
+  });
+  if (rows.length === 0) {
+    rows.push({ 'Workshop': '', 'Question': '', 'Team': '', 'Notes': 'No notes yet', 'Last Updated': '' });
+  }
+  var ws = XLSX.utils.json_to_sheet(rows);
+  // Set column widths
+  ws['!cols'] = [{ wch: 40 }, { wch: 60 }, { wch: 15 }, { wch: 80 }, { wch: 20 }];
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Workshop Notes');
+  XLSX.writeFile(wb, 'Embodied-Minds-Notes-' + new Date().toISOString().split('T')[0] + '.xlsx');
+}
+
+// ================================================================
+//  WORD EXPORT
+// ================================================================
+async function downloadWord() {
+  var children = [];
+  var D = docx;
+
+  children.push(new D.Paragraph({
+    children: [new D.TextRun({ text: 'Embodied Minds Workshop Notes', bold: true, size: 48, font: 'Georgia' })],
+    spacing: { after: 200 }
+  }));
+  children.push(new D.Paragraph({
+    children: [new D.TextRun({ text: 'Pre-Conference Salon · ' + new Date().toLocaleDateString(), size: 24, color: '666666' })],
+    spacing: { after: 400 }
+  }));
+
+  ST.workshops.forEach(function(w) {
+    children.push(new D.Paragraph({
+      children: [new D.TextRun({ text: w.title, bold: true, size: 36, font: 'Georgia' })],
+      spacing: { before: 400, after: 200 },
+      heading: D.HeadingLevel.HEADING_1
+    }));
+
+    var wQuestions = ST.questions.filter(function(q) { return q.workshop_id === w.id; });
+    wQuestions.sort(function(a, b) { return a.sort_order - b.sort_order; });
+
+    wQuestions.forEach(function(q, qi) {
+      children.push(new D.Paragraph({
+        children: [new D.TextRun({ text: 'Question ' + (qi + 1) + ': ' + q.text, bold: true, size: 28 })],
+        spacing: { before: 300, after: 150 },
+        heading: D.HeadingLevel.HEADING_2
+      }));
+
+      var qTeams = ST.allTeams.filter(function(t) { return t.question_id === q.id; });
+      if (qTeams.length === 0) {
+        children.push(new D.Paragraph({
+          children: [new D.TextRun({ text: 'No teams yet', italics: true, color: '999999', size: 22 })],
+          spacing: { after: 100 }
+        }));
+      } else {
+        qTeams.forEach(function(t) {
+          children.push(new D.Paragraph({
+            children: [new D.TextRun({ text: t.team_name, bold: true, size: 24 })],
+            spacing: { before: 200, after: 50 },
+            heading: D.HeadingLevel.HEADING_3
+          }));
+          // Split notes by newlines into separate paragraphs
+          var lines = (t.notes || '(no notes)').split('\n');
+          lines.forEach(function(line) {
+            children.push(new D.Paragraph({
+              children: [new D.TextRun({ text: line, size: 22 })],
+              spacing: { after: 60 }
+            }));
+          });
+        });
+      }
+    });
+  });
+
+  var doc = new D.Document({
+    sections: [{ properties: {}, children: children }]
+  });
+
+  var blob = await D.Packer.toBlob(doc);
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'Embodied-Minds-Notes-' + new Date().toISOString().split('T')[0] + '.docx';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
