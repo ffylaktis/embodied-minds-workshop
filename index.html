@@ -301,6 +301,7 @@
     .synth-wordcloud-wrap {
       background: var(--card); border: 1px solid var(--lunar-07); border-radius: 14px;
       padding: 24px; margin-bottom: 24px; position: relative; overflow: hidden;
+      min-height: 380px;
     }
     .synth-wordcloud-wrap svg { display: block; margin: 0 auto; }
     .synth-wordcloud-wrap svg text { transition: font-size 0.6s ease, fill 0.4s ease; cursor: default; }
@@ -898,7 +899,7 @@ async function triggerSynthesis(workshopId) {
     ST.synthLoading = false;
     await loadSnapshots(workshopId);
     render();
-    renderWordCloud(ST.synthWordFreqs);
+    setTimeout(function() { renderWordCloud(ST.synthWordFreqs); }, 100);
   } catch (e) {
     console.error('Synthesis error:', e);
     ST.synthLoading = false;
