@@ -584,6 +584,7 @@ function renderDashboard() {
     + '<button class="btn-download" id="download-btn">Markdown (ZIP)</button>'
     + '<button class="btn-download" id="download-excel-btn">Excel (.xlsx)</button>'
     + '<button class="btn-download" id="download-word-btn">Word (.docx)</button>'
+    + '<button class="btn-download" id="download-all-btn" style="border-color:var(--gold);color:var(--gold);font-weight:600">Download Everything (ZIP)</button>'
     + '</div>'
     + renderSynthSection()
     + sections;
@@ -686,6 +687,14 @@ function attachListeners() {
   if (dlExcel) dlExcel.addEventListener('click', downloadExcel);
   var dlWord = document.getElementById('download-word-btn');
   if (dlWord) dlWord.addEventListener('click', downloadWord);
+  var dlAll = document.getElementById('download-all-btn');
+  if (dlAll) dlAll.addEventListener('click', downloadEverything);
+  var dlWc = document.getElementById('dl-wordcloud-btn');
+  if (dlWc) dlWc.addEventListener('click', downloadWordCloudPng);
+  var dlSynth = document.getElementById('dl-synthesis-btn');
+  if (dlSynth) dlSynth.addEventListener('click', downloadSynthesisExcel);
+  var dlSynthWord = document.getElementById('dl-synthesis-word-btn');
+  if (dlSynthWord) dlSynthWord.addEventListener('click', downloadSynthesisWord);
 
   document.querySelectorAll('[data-action="go-home"]').forEach(function(el) {
     el.addEventListener('click', function() { cleanupNotes(); removePin(); clearSynthTimers(); ST.screen = 'home'; render(); });
@@ -869,6 +878,229 @@ async function downloadWord() {
   var blob = await D.Packer.toBlob(doc);
   var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
   a.download = 'Embodied-Minds-Notes-' + new Date().toISOString().split('T')[0] + '.docx';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+// ================================================================
+//  WORD CLOUD PNG EXPORT
+// ================================================================
+function downloadWordCloudPng() {
+  var svgEl = document.querySelector('#synth-wordcloud svg');
+  if (!svgEl) { alert('No word cloud to download. Generate synthesis first.'); return; }
+  var w = parseInt(svgEl.getAttribute('width'));
+  var h = parseInt(svgEl.getAttribute('height'));
+  // Clone SVG and add background
+  var clone = svgEl.cloneNode(true);
+  var bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  bg.setAttribute('width', w); bg.setAttribute('height', h);
+  bg.setAttribute('fill', '#10121F');
+  clone.insertBefore(bg, clone.firstChild);
+  var svgData = new XMLSerializer().serializeToString(clone);
+  var canvas = document.createElement('canvas');
+  canvas.width = w * 2; canvas.height = h * 2;
+  var ctx = canvas.getContext('2d');
+  ctx.scale(2, 2);
+  var img = new Image();
+  img.onload = function() {
+    ctx.drawImage(img, 0, 0);
+    var a = document.createElement('a');
+    a.download = 'Word-Cloud-' + new Date().toISOString().split('T')[0] + '.png';
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+  };
+  img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+}
+
+// ================================================================
+//  SYNTHESIS EXCEL EXPORT
+// ================================================================
+function downloadSynthesisExcel() {
+  if (!ST.synthData) { alert('No synthesis data. Generate synthesis first.'); return; }
+  var wb = XLSX.utils.book_new();
+  var w = ST.workshops.find(function(w) { return w.id === ST.synthWorkshopId; });
+  var wTitle = w ? w.title : 'Workshop';
+
+  // Gaps sheet
+  var gapsRows = (ST.synthData.gaps || []).map(function(g, i) { return { '#': i + 1, 'Knowledge Gap': g }; });
+  if (gapsRows.length) { var gs = XLSX.utils.json_to_sheet(gapsRows); gs['!cols'] = [{ wch: 5 }, { wch: 100 }]; XLSX.utils.book_append_sheet(wb, gs, 'Gaps'); }
+
+  // Opportunities sheet
+  var oppsRows = (ST.synthData.opportunities || []).map(function(o, i) { return { '#': i + 1, 'Opportunity': o }; });
+  if (oppsRows.length) { var os = XLSX.utils.json_to_sheet(oppsRows); os['!cols'] = [{ wch: 5 }, { wch: 100 }]; XLSX.utils.book_append_sheet(wb, os, 'Opportunities'); }
+
+  // Themes sheet
+  var themeRows = (ST.synthData.themes || []).map(function(t) { return { 'Theme': t.name || t.theme || '', 'Description': t.description || '', 'Mentions': t.mentions || t.mention_count || 0 }; });
+  if (themeRows.length) { var ts = XLSX.utils.json_to_sheet(themeRows); ts['!cols'] = [{ wch: 30 }, { wch: 80 }, { wch: 10 }]; XLSX.utils.book_append_sheet(wb, ts, 'Themes'); }
+
+  // Word frequencies sheet
+  var wordRows = (ST.synthWordFreqs || []).map(function(w) { return { 'Word': w.word, 'Count': w.count }; });
+  if (wordRows.length) { var ws = XLSX.utils.json_to_sheet(wordRows); ws['!cols'] = [{ wch: 25 }, { wch: 10 }]; XLSX.utils.book_append_sheet(wb, ws, 'Word Frequencies'); }
+
+  XLSX.writeFile(wb, 'Synthesis-' + wTitle.replace(/[^a-zA-Z0-9 ]/g, '').replace(/ /g, '-') + '-' + new Date().toISOString().split('T')[0] + '.xlsx');
+}
+
+// ================================================================
+//  SYNTHESIS WORD EXPORT
+// ================================================================
+async function downloadSynthesisWord() {
+  if (!ST.synthData) { alert('No synthesis data. Generate synthesis first.'); return; }
+  var D = docx;
+  var w = ST.workshops.find(function(w) { return w.id === ST.synthWorkshopId; });
+  var wTitle = w ? w.title : 'Workshop';
+  var children = [];
+
+  children.push(new D.Paragraph({ children: [new D.TextRun({ text: 'Synthesis Report: ' + wTitle, bold: true, size: 44, font: 'Georgia' })], spacing: { after: 200 } }));
+  children.push(new D.Paragraph({ children: [new D.TextRun({ text: 'Generated ' + new Date().toLocaleString(), size: 22, color: '666666' })], spacing: { after: 400 } }));
+
+  // Gaps
+  children.push(new D.Paragraph({ children: [new D.TextRun({ text: 'Knowledge Gaps', bold: true, size: 32 })], spacing: { before: 300, after: 150 }, heading: D.HeadingLevel.HEADING_1 }));
+  (ST.synthData.gaps || []).forEach(function(g) {
+    children.push(new D.Paragraph({ children: [new D.TextRun({ text: g, size: 22 })], spacing: { after: 80 }, bullet: { level: 0 } }));
+  });
+
+  // Opportunities
+  children.push(new D.Paragraph({ children: [new D.TextRun({ text: 'Opportunities', bold: true, size: 32 })], spacing: { before: 300, after: 150 }, heading: D.HeadingLevel.HEADING_1 }));
+  (ST.synthData.opportunities || []).forEach(function(o) {
+    children.push(new D.Paragraph({ children: [new D.TextRun({ text: o, size: 22 })], spacing: { after: 80 }, bullet: { level: 0 } }));
+  });
+
+  // Themes
+  children.push(new D.Paragraph({ children: [new D.TextRun({ text: 'Themes', bold: true, size: 32 })], spacing: { before: 300, after: 150 }, heading: D.HeadingLevel.HEADING_1 }));
+  (ST.synthData.themes || []).forEach(function(t) {
+    children.push(new D.Paragraph({ children: [new D.TextRun({ text: (t.name || t.theme || '') + ' (' + (t.mentions || t.mention_count || 0) + ' mentions)', bold: true, size: 24 })], spacing: { before: 150, after: 60 } }));
+    children.push(new D.Paragraph({ children: [new D.TextRun({ text: t.description || '', size: 22 })], spacing: { after: 100 } }));
+  });
+
+  // Word frequencies
+  children.push(new D.Paragraph({ children: [new D.TextRun({ text: 'Word Frequencies (Top 30)', bold: true, size: 32 })], spacing: { before: 300, after: 150 }, heading: D.HeadingLevel.HEADING_1 }));
+  (ST.synthWordFreqs || []).slice(0, 30).forEach(function(w) {
+    children.push(new D.Paragraph({ children: [new D.TextRun({ text: w.word + ': ' + w.count, size: 22 })], spacing: { after: 40 } }));
+  });
+
+  var doc = new D.Document({ sections: [{ properties: {}, children: children }] });
+  var blob = await D.Packer.toBlob(doc);
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'Synthesis-' + wTitle.replace(/[^a-zA-Z0-9 ]/g, '').replace(/ /g, '-') + '-' + new Date().toISOString().split('T')[0] + '.docx';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+// ================================================================
+//  DOWNLOAD EVERYTHING (ZIP)
+// ================================================================
+async function downloadEverything() {
+  var zip = new JSZip();
+  var root = zip.folder('Embodied-Minds-Complete');
+  var dateStr = new Date().toISOString().split('T')[0];
+
+  // 1. Notes by workshop/question/team (markdown)
+  var notesFolder = root.folder('01-Notes');
+  for (var wi = 0; wi < ST.workshops.length; wi++) {
+    var w = ST.workshops[wi];
+    var wFolder = notesFolder.folder(String(wi+1).padStart(2,'0') + '-' + w.title.replace(/[^a-zA-Z0-9 ]/g, '').replace(/ /g, '-'));
+    var wQ = ST.questions.filter(function(q) { return q.workshop_id === w.id; });
+    wQ.sort(function(a, b) { return a.sort_order - b.sort_order; });
+    for (var qi = 0; qi < wQ.length; qi++) {
+      var q = wQ[qi];
+      var qFolder = wFolder.folder(String(qi+1).padStart(2,'0') + '-' + q.short_title);
+      var qT = ST.allTeams.filter(function(t) { return t.question_id === q.id; });
+      for (var ti = 0; ti < qT.length; ti++) {
+        var t = qT[ti];
+        qFolder.file(t.team_name.replace(/[^a-zA-Z0-9 ]/g,'').replace(/ /g,'-') + '.md',
+          '# ' + q.text + '\n\n**Team:** ' + t.team_name + '\n**Workshop:** ' + w.title + '\n**Last updated:** ' + new Date(t.updated_at).toLocaleString() + '\n\n---\n\n' + (t.notes || '(no notes)'));
+      }
+    }
+  }
+
+  // 2. Notes Excel
+  var rows = [];
+  ST.workshops.forEach(function(w) {
+    var wQ = ST.questions.filter(function(q) { return q.workshop_id === w.id; });
+    wQ.sort(function(a, b) { return a.sort_order - b.sort_order; });
+    wQ.forEach(function(q) {
+      ST.allTeams.filter(function(t) { return t.question_id === q.id; }).forEach(function(t) {
+        rows.push({ Workshop: w.title, Question: q.text, Team: t.team_name, Notes: t.notes || '', 'Last Updated': new Date(t.updated_at).toLocaleString() });
+      });
+    });
+  });
+  if (!rows.length) rows.push({ Workshop: '', Question: '', Team: '', Notes: 'No notes yet', 'Last Updated': '' });
+  var ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [{ wch: 40 }, { wch: 60 }, { wch: 15 }, { wch: 80 }, { wch: 20 }];
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'All Notes');
+  var excelBuf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  root.file('02-All-Notes.xlsx', excelBuf);
+
+  // 3. Synthesis reports per workshop (if any synthesis has been generated)
+  var synthFolder = root.folder('03-Synthesis');
+  // Run synthesis for all workshops with notes
+  for (var si = 0; si < ST.workshops.length; si++) {
+    var sw = ST.workshops[si];
+    var swTeams = ST.allTeams.filter(function(t) {
+      return ST.questions.filter(function(q) { return q.workshop_id === sw.id; }).some(function(q) { return q.id === t.question_id; });
+    });
+    if (swTeams.length === 0) continue;
+
+    // Check if we already have a snapshot for this workshop
+    var snapRes = await sb.from('workshop_snapshots').select('*').eq('workshop_id', sw.id).order('created_at', { ascending: false }).limit(1);
+    var snap = snapRes.data && snapRes.data[0];
+
+    if (snap) {
+      var swName = String(si+1).padStart(2,'0') + '-' + sw.title.replace(/[^a-zA-Z0-9 ]/g, '').replace(/ /g, '-');
+      var swFolder = synthFolder.folder(swName);
+
+      // Synthesis markdown
+      var synthMd = '# Synthesis: ' + sw.title + '\n\nGenerated: ' + new Date(snap.created_at).toLocaleString() + '\n\n';
+      synthMd += '## Knowledge Gaps\n\n' + (snap.synthesis.gaps || []).map(function(g) { return '- ' + g; }).join('\n') + '\n\n';
+      synthMd += '## Opportunities\n\n' + (snap.synthesis.opportunities || []).map(function(o) { return '- ' + o; }).join('\n') + '\n\n';
+      synthMd += '## Themes\n\n' + (snap.synthesis.themes || []).map(function(t) { return '### ' + (t.name || t.theme || '') + ' (' + (t.mentions || 0) + ' mentions)\n' + (t.description || '') + '\n'; }).join('\n') + '\n';
+      synthMd += '## Word Frequencies\n\n' + (snap.word_frequencies || []).slice(0, 30).map(function(w) { return '- **' + w.word + '**: ' + w.count; }).join('\n') + '\n';
+      swFolder.file('synthesis-report.md', synthMd);
+
+      // Synthesis Excel
+      var swb = XLSX.utils.book_new();
+      var gapsRows = (snap.synthesis.gaps || []).map(function(g, i) { return { '#': i+1, Gap: g }; });
+      if (gapsRows.length) { var gs = XLSX.utils.json_to_sheet(gapsRows); XLSX.utils.book_append_sheet(swb, gs, 'Gaps'); }
+      var oppsRows = (snap.synthesis.opportunities || []).map(function(o, i) { return { '#': i+1, Opportunity: o }; });
+      if (oppsRows.length) { var os = XLSX.utils.json_to_sheet(oppsRows); XLSX.utils.book_append_sheet(swb, os, 'Opportunities'); }
+      var themeRows = (snap.synthesis.themes || []).map(function(t) { return { Theme: t.name || t.theme || '', Description: t.description || '', Mentions: t.mentions || 0 }; });
+      if (themeRows.length) { var ts = XLSX.utils.json_to_sheet(themeRows); XLSX.utils.book_append_sheet(swb, ts, 'Themes'); }
+      var wordRows = (snap.word_frequencies || []).map(function(w) { return { Word: w.word, Count: w.count }; });
+      if (wordRows.length) { var wfs = XLSX.utils.json_to_sheet(wordRows); XLSX.utils.book_append_sheet(swb, wfs, 'Word Frequencies'); }
+      var synthExcel = XLSX.write(swb, { bookType: 'xlsx', type: 'array' });
+      swFolder.file('synthesis-report.xlsx', synthExcel);
+    }
+  }
+
+  // 4. Word cloud PNG (if visible)
+  var svgEl = document.querySelector('#synth-wordcloud svg');
+  if (svgEl) {
+    try {
+      var wcW = parseInt(svgEl.getAttribute('width'));
+      var wcH = parseInt(svgEl.getAttribute('height'));
+      var clone = svgEl.cloneNode(true);
+      var bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      bg.setAttribute('width', wcW); bg.setAttribute('height', wcH); bg.setAttribute('fill', '#10121F');
+      clone.insertBefore(bg, clone.firstChild);
+      var svgData = new XMLSerializer().serializeToString(clone);
+      var canvas = document.createElement('canvas');
+      canvas.width = wcW * 2; canvas.height = wcH * 2;
+      var ctx = canvas.getContext('2d');
+      ctx.scale(2, 2);
+      var pngBlob = await new Promise(function(resolve) {
+        var img = new Image();
+        img.onload = function() {
+          ctx.drawImage(img, 0, 0);
+          canvas.toBlob(function(b) { resolve(b); }, 'image/png');
+        };
+        img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+      });
+      if (pngBlob) root.file('04-Word-Cloud.png', pngBlob);
+    } catch (e) { console.error('Word cloud PNG export failed:', e); }
+  }
+
+  var blob = await zip.generateAsync({ type: 'blob' });
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'Embodied-Minds-Complete-' + dateStr + '.zip';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
 
@@ -1096,6 +1328,11 @@ function renderSynthSection() {
     var controls = '<div class="synth-controls">'
       + '<button class="synth-btn" data-action="synth-refresh">Refresh Now</button>'
       + '<button class="synth-btn' + (ST.synthAutoRefresh ? ' active' : '') + '" id="synth-autorefresh-btn">' + (ST.synthAutoRefresh ? 'Live: ON' : 'Live: OFF') + '</button>'
+      + '</div>'
+      + '<div class="synth-controls" style="margin-top:8px">'
+      + '<button class="synth-btn" id="dl-wordcloud-btn">Word Cloud (PNG)</button>'
+      + '<button class="synth-btn" id="dl-synthesis-btn">Synthesis (Excel)</button>'
+      + '<button class="synth-btn" id="dl-synthesis-word-btn">Synthesis (Word)</button>'
       + '</div>';
 
     content = panel + themesSection + wordcloud + timeline + controls;
