@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Embodied Minds · Workshop Notes</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,300;1,8..60,400;1,8..60,500&family=Sora:wght@200;300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:#0B0D1A; --card:#111328; --elevated:#171A32; --hover:#1D2040; --mist:#E8E4F0;
+    --lunar:#E8EAF2;
+    --lunar-90:rgba(232,234,242,0.90); --lunar-70:rgba(232,234,242,0.70);
+    --lunar-50:rgba(232,234,242,0.50); --lunar-30:rgba(232,234,242,0.20);
+    --ink:#0B0D1A; --ink-lavender:#6B5F8A;
+    --lavender:#9B8EC4; --lavender-light:#B0A5D4;
+    --gold:#D4A94E; --gold-light:#E2C06A;
+    --gold-dim:rgba(212,169,78,0.10);
+    --border:rgba(232,234,242,0.07); --border-h:rgba(232,234,242,0.14);
+    --green:#2a6a3a;
+    --serif:'Source Serif 4','Georgia',serif;
+    --sans:'Sora','Helvetica Neue',sans-serif;
+  }
+  body {
+    background:var(--bg);
+    background-image:
+      radial-gradient(ellipse 80% 60% at 70% 10%, rgba(155,142,196,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 20% 50%, rgba(75,68,120,0.06) 0%, transparent 55%),
+      radial-gradient(ellipse 70% 40% at 80% 80%, rgba(196,162,101,0.04) 0%, transparent 50%);
+    color:var(--lunar); font-family:var(--sans); font-weight:300; min-height:100vh;
+    display:flex; align-items:flex-start; justify-content:center; padding:40px 20px;
+    -webkit-font-smoothing:antialiased;
+  }
+  #app { width:100%; max-width:700px; }
+  .screen { animation:fadein .4s ease; }
+  @keyframes fadein { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+
+  .mark { font-size:26px; color:var(--gold-light); cursor:pointer; user-select:none; display:inline-block; margin-bottom:36px; line-height:1; }
+  .eyebrow { font-size:11px; letter-spacing:3.5px; text-transform:uppercase; color:var(--lavender); margin-bottom:18px; font-weight:500; }
+  .title { font-family:var(--serif); font-size:clamp(28px,4vw,42px); font-weight:500; line-height:1.15; margin-bottom:20px; letter-spacing:-0.02em; }
+  .title em { font-style:italic; color:var(--gold-light); }
+  .subtitle { font-size:15px; color:var(--lunar-70); line-height:1.7; margin-bottom:32px; max-width:480px; }
+
+  /* Cards for session/question selection */
+  .card-grid { display:flex; flex-direction:column; gap:10px; }
+  .card {
+    background:var(--card); border:1px solid var(--border); border-radius:10px;
+    padding:20px 24px; cursor:pointer; transition:all .2s ease;
+  }
+  .card:hover { border-color:var(--border-h); background:var(--elevated); transform:translateY(-1px); }
+  .card-title { font-family:var(--serif); font-size:20px; font-weight:500; margin-bottom:4px; }
+  .card-sub { font-size:13px; color:var(--lunar-50); line-height:1.6; }
+
+  /* Team entry */
+  .input-group { margin-bottom:24px; }
+  .input-label { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--lavender); margin-bottom:8px; font-weight:500; }
+  .text-input {
+    width:100%; background:var(--card); border:1px solid var(--border); border-radius:8px;
+    color:var(--lunar); font-family:var(--sans); font-size:15px; font-weight:300;
+    padding:14px 18px; outline:none; transition:border-color .2s;
+  }
+  .text-input:focus { border-color:var(--lavender); }
+  .text-input::placeholder { color:var(--lunar-30); }
+
+  .existing-teams { margin-bottom:24px; }
+  .existing-teams-label { font-size:12px; color:var(--lunar-50); margin-bottom:8px; }
+  .team-chip {
+    display:inline-block; background:var(--card); border:1px solid var(--border); border-radius:6px;
+    padding:6px 14px; font-size:13px; color:var(--lunar-70); cursor:pointer; margin:0 6px 6px 0;
+    transition:all .15s;
+  }
+  .team-chip:hover { border-color:var(--gold); color:var(--lunar); background:var(--gold-dim); }
+
+  /* Notes editor */
+  .question-display {
+    font-family:var(--serif); font-size:clamp(18px,3vw,24px); font-weight:500;
+    line-height:1.4; margin-bottom:6px; color:var(--lunar);
+  }
+  .team-display { font-size:13px; color:var(--lavender); margin-bottom:20px; }
+  .notes-area {
+    width:100%; min-height:60vh; background:var(--card); border:1px solid var(--border);
+    border-radius:10px; color:var(--lunar); font-family:var(--sans); font-size:15px;
+    font-weight:300; padding:20px; line-height:1.8; outline:none; resize:vertical;
+    transition:border-color .2s;
+  }
+  .notes-area:focus { border-color:var(--lavender); }
+  .notes-area::placeholder { color:var(--lunar-30); }
+  .save-indicator {
+    font-size:12px; color:var(--lunar-50); margin-top:8px; display:flex;
+    align-items:center; gap:6px; transition:color .3s;
+  }
+  .save-indicator.saved { color:var(--green); }
+  .save-indicator.saving { color:var(--gold); }
+  .save-indicator.error { color:#c44; }
+
+  /* Buttons */
+  .btn-primary {
+    background:linear-gradient(170deg,#D4B67E 0%,#C4A265 60%,#B89555 100%);
+    border:1px solid rgba(212,182,126,0.35); color:var(--ink); font-family:var(--sans);
+    font-size:13px; letter-spacing:1.5px; text-transform:uppercase; padding:14px 32px;
+    cursor:pointer; transition:all .3s ease; border-radius:8px; font-weight:500;
+    box-shadow:0 3px 12px rgba(196,162,101,0.25),inset 0 1px 0 rgba(255,255,255,0.12);
+  }
+  .btn-primary:hover { background:linear-gradient(170deg,#E0C48E 0%,#D4B67E 60%,#C4A265 100%); transform:translateY(-1px); }
+  .btn-primary:disabled { background:var(--elevated); border-color:var(--border); color:var(--lunar-30); cursor:default; box-shadow:none; transform:none; }
+  .btn-back { background:transparent; border:none; color:var(--lunar-50); font-family:var(--sans); font-size:13px; cursor:pointer; letter-spacing:1px; margin-bottom:24px; }
+  .btn-back:hover { color:var(--lunar-70); }
+
+  /* Organizer dashboard */
+  .dash-section { margin-bottom:32px; }
+  .dash-workshop-title { font-family:var(--serif); font-size:22px; font-weight:500; margin-bottom:12px; color:var(--gold-light); }
+  .dash-question { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:16px 20px; margin-bottom:8px; }
+  .dash-question-text { font-size:14px; color:var(--lunar-70); margin-bottom:8px; }
+  .dash-team { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); cursor:pointer; }
+  .dash-team:last-child { border-bottom:none; }
+  .dash-team-name { font-size:14px; color:var(--lunar); }
+  .dash-team-preview { font-size:12px; color:var(--lunar-50); max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .dash-team-time { font-size:11px; color:var(--lunar-30); }
+  .dash-stats { display:flex; gap:24px; margin-bottom:24px; }
+  .dash-stat { text-align:center; }
+  .dash-stat-num { font-family:var(--serif); font-size:28px; font-weight:500; color:var(--gold-light); }
+  .dash-stat-label { font-size:11px; color:var(--lunar-50); letter-spacing:1px; text-transform:uppercase; }
+
+  /* PIN overlay */
+  .pin-overlay {
+    position:fixed; inset:0; background:var(--bg); display:flex; align-items:center;
+    justify-content:center; flex-direction:column; z-index:100;
+  }
+  .pin-input {
+    width:200px; text-align:center; background:var(--card); border:1px solid var(--border);
+    border-radius:8px; color:var(--lunar); font-family:var(--sans); font-size:24px;
+    font-weight:300; padding:14px; letter-spacing:8px; outline:none;
+  }
+  .pin-input:focus { border-color:var(--lavender); }
+  .pin-error { color:#c44; font-size:13px; margin-top:12px; }
+
+  /* Download button */
+  .btn-download {
+    background:transparent; border:1px solid var(--gold); color:var(--gold-light);
+    font-family:var(--sans); font-size:12px; letter-spacing:1px; padding:9px 20px;
+    cursor:pointer; transition:all .2s; border-radius:8px; font-weight:500;
+  }
+  .btn-download:hover { background:rgba(196,162,101,0.08); border-color:var(--gold-light); }
+
+  /* Responsive */
+  @media (max-width:480px) {
+    body { padding:20px 12px; }
+    .notes-area { min-height:50vh; padding:14px; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<!-- Supabase JS client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<!-- JSZip for export -->
+<script src="https://cdn.jsdelivr.net/npm/jszip@3/dist/jszip.min.js"></script>
+<!-- DOMPurify for XSS protection -->
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+
+<script>
+// ================================================================
+//  SUPABASE CONFIG
+// ================================================================
+const SB_URL = 'https://yaqduwagdixcaifbsshk.supabase.co';
+const SB_KEY = 'sb_publishable_gZS4HBAWTj1r6jk48XYKEw_SqIY3lhw';
+const sb = supabase.createClient(SB_URL, SB_KEY);
+
+// ================================================================
+//  SANITIZATION HELPER
+// ================================================================
+// All user-generated content (team names, notes) is sanitized via
+// DOMPurify before rendering. The esc() function strips all HTML
+// tags and attributes, returning plain text safe for innerHTML.
+// The textarea value is set via DOM property (ta.value = ST.notes),
+// NOT via innerHTML, to prevent XSS.
+function esc(str) {
+  return DOMPurify.sanitize(str, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
+}
+
+// ================================================================
+//  APP STATE
+// ================================================================
+const ST = {
+  screen: 'home',        // home | questions | team-entry | notes | dashboard | pin
+  workshops: [],
+  questions: [],
+  selectedWorkshop: null,
+  selectedQuestion: null,
+  teamName: '',
+  teamId: null,
+  notes: '',
+  existingTeams: [],
+  saveStatus: 'saved',   // saved | saving | error
+  saveTimer: null,
+  localStorageKey: null,
+  realtimeSub: null,
+  allTeams: [],           // for dashboard
+};
+
+// ================================================================
+//  DATA LOADING
+// ================================================================
+async function loadWorkshops() {
+  const { data, error } = await sb.from('workshops').select('*').order('sort_order');
+  if (error) { console.error('Failed to load workshops:', error); return; }
+  ST.workshops = data;
+}
+
+async function loadQuestions(workshopId) {
+  const { data, error } = await sb.from('questions').select('*').eq('workshop_id', workshopId).order('sort_order');
+  if (error) { console.error('Failed to load questions:', error); return; }
+  ST.questions = data;
+}
+
+async function loadExistingTeams(questionId) {
+  const { data, error } = await sb.from('teams').select('id, team_name, updated_at').eq('question_id', questionId).order('created_at');
+  if (error) { console.error('Failed to load teams:', error); return; }
+  ST.existingTeams = data;
+}
+
+async function loadOrCreateTeam(questionId, teamName) {
+  // Check if team already exists
+  const { data: existing } = await sb.from('teams')
+    .select('*')
+    .eq('question_id', questionId)
+    .eq('team_name', teamName)
+    .limit(1);
+
+  if (existing && existing.length > 0) {
+    return existing[0];
+  }
+
+  // Create new team
+  const { data, error } = await sb.from('teams')
+    .insert({ question_id: questionId, team_name: teamName })
+    .select()
+    .single();
+
+  if (error) { console.error('Failed to create team:', error); return null; }
+  return data;
+}
+
+// ================================================================
+//  RENDERING
+// ================================================================
+// All render functions use esc() (DOMPurify) to sanitize any
+// user-generated content before placing it in markup. Static
+// markup and admin-controlled DB content are also escaped for
+// defense-in-depth. The notes textarea value is set via the DOM
+// property (ta.value) after innerHTML assignment to avoid XSS.
+function render() {
+  const app = document.getElementById('app');
+  switch (ST.screen) {
+    case 'home':       app.innerHTML = renderHome(); break;
+    case 'questions':  app.innerHTML = renderQuestions(); break;
+    case 'team-entry': app.innerHTML = renderTeamEntry(); break;
+    case 'notes':      app.innerHTML = renderNotes(); break;
+    case 'pin':        app.innerHTML = renderPin(); break;
+    case 'dashboard':  app.innerHTML = renderDashboard(); break;
+  }
+  // SECURITY: Set textarea value via DOM property (not innerHTML) to prevent XSS
+  if (ST.screen === 'notes') {
+    const ta = document.getElementById('notes-textarea');
+    if (ta) ta.value = ST.notes;
+  }
+  attachListeners();
+}
+
+function renderHome() {
+  return '<div class="screen">'
+    + '<div class="mark" onclick="goPin()">&#9671;</div>'
+    + '<p class="eyebrow">Workshop Notes</p>'
+    + '<h1 class="title">Embodied <em>Minds</em></h1>'
+    + '<p class="subtitle">Select your workshop session to begin taking notes for your group.</p>'
+    + '<div class="card-grid">'
+    + ST.workshops.map(function(w) {
+        return '<div class="card" data-action="select-workshop" data-id="' + esc(w.id) + '">'
+          + '<div class="card-title">' + esc(w.title) + '</div>'
+          + '</div>';
+      }).join('')
+    + '</div>'
+    + '</div>';
+}
+
+function renderQuestions() {
+  var w = ST.workshops.find(function(w) { return w.id === ST.selectedWorkshop; });
+  return '<div class="screen">'
+    + '<button class="btn-back" data-action="go-home">&larr; Back</button>'
+    + '<p class="eyebrow">' + (w ? esc(w.title) : 'Workshop') + '</p>'
+    + '<h1 class="title">Choose your <em>question</em></h1>'
+    + '<p class="subtitle">Your group will explore one of these questions together.</p>'
+    + '<div class="card-grid">'
+    + ST.questions.map(function(q, i) {
+        return '<div class="card" data-action="select-question" data-id="' + esc(q.id) + '">'
+          + '<div class="card-title">Question ' + (i + 1) + '</div>'
+          + '<div class="card-sub">' + esc(q.text) + '</div>'
+          + '</div>';
+      }).join('')
+    + '</div>'
+    + '</div>';
+}
+
+function renderTeamEntry() {
+  var q = ST.questions.find(function(q) { return q.id === ST.selectedQuestion; });
+  var teamsHtml = '';
+  if (ST.existingTeams.length > 0) {
+    teamsHtml = '<div class="existing-teams">'
+      + '<p class="existing-teams-label">Existing teams on this question:</p>'
+      + ST.existingTeams.map(function(t) {
+          return '<span class="team-chip" data-action="join-team" data-id="' + esc(t.id) + '" data-name="' + esc(t.team_name) + '">' + esc(t.team_name) + '</span>';
+        }).join('')
+      + '</div>';
+  }
+  return '<div class="screen">'
+    + '<button class="btn-back" data-action="go-questions">&larr; Back</button>'
+    + '<p class="eyebrow">Your Question</p>'
+    + '<p class="question-display">' + (q ? esc(q.text) : '') + '</p>'
+    + '<p class="subtitle" style="margin-top:24px">Enter your team name to start taking notes, or join an existing team.</p>'
+    + teamsHtml
+    + '<div class="input-group">'
+    + '<p class="input-label">New Team Name</p>'
+    + '<input type="text" class="text-input" id="team-name-input" placeholder="e.g. Team Alpha" maxlength="50"/>'
+    + '</div>'
+    + '<button class="btn-primary" id="start-notes-btn" disabled>Start Taking Notes &rarr;</button>'
+    + '</div>';
+}
+
+function renderNotes() {
+  var q = ST.questions.find(function(q) { return q.id === ST.selectedQuestion; });
+  var w = ST.workshops.find(function(w) { return w.id === ST.selectedWorkshop; });
+  var statusText = ST.saveStatus === 'saved' ? 'All changes saved' :
+                   ST.saveStatus === 'saving' ? 'Saving...' : 'Save failed — retrying...';
+  // Note: textarea value is set via DOM property in render(), not here
+  return '<div class="screen">'
+    + '<button class="btn-back" data-action="go-home">&larr; Leave notes</button>'
+    + '<p class="eyebrow">' + esc(ST.teamName) + '</p>'
+    + '<p class="question-display">' + (q ? esc(q.text) : '') + '</p>'
+    + '<div class="team-display">' + (w ? esc(w.title) : '') + '</div>'
+    + '<textarea class="notes-area" id="notes-textarea" placeholder="Start typing your notes here..."></textarea>'
+    + '<div class="save-indicator ' + ST.saveStatus + '" id="save-indicator">' + statusText + '</div>'
+    + '</div>';
+}
+
+function renderPin() {
+  return '<div class="pin-overlay">'
+    + '<p class="eyebrow" style="margin-bottom:24px">Organizer Access</p>'
+    + '<input type="password" class="pin-input" id="pin-input" maxlength="4" placeholder="PIN" inputmode="numeric"/>'
+    + '<div class="pin-error" id="pin-error" style="display:none">Incorrect PIN</div>'
+    + '<button class="btn-back" style="margin-top:24px" data-action="go-home">&larr; Back</button>'
+    + '</div>';
+}
+
+function renderDashboard() {
+  var totalTeams = ST.allTeams.length;
+  var activeTeams = ST.allTeams.filter(function(t) { return t.notes.trim().length > 0; }).length;
+  var sectionsHtml = ST.workshops.map(function(w) {
+    var wQuestions = ST.questions.filter(function(q) { return q.workshop_id === w.id; });
+    if (wQuestions.length === 0) return '';
+    return '<div class="dash-section">'
+      + '<div class="dash-workshop-title">' + esc(w.title) + '</div>'
+      + wQuestions.map(function(q) {
+          var qTeams = ST.allTeams.filter(function(t) { return t.question_id === q.id; });
+          var teamsContent = qTeams.length === 0
+            ? '<div style="font-size:12px;color:var(--lunar-30);padding:4px 0">No teams yet</div>'
+            : qTeams.map(function(t) {
+                return '<div class="dash-team" data-action="view-team-notes" data-id="' + esc(t.id) + '">'
+                  + '<span class="dash-team-name">' + esc(t.team_name) + '</span>'
+                  + '<span class="dash-team-preview">' + (esc(t.notes.substring(0, 80)) || '(empty)') + '</span>'
+                  + '<span class="dash-team-time">' + new Date(t.updated_at).toLocaleTimeString() + '</span>'
+                  + '</div>';
+              }).join('');
+          return '<div class="dash-question">'
+            + '<div class="dash-question-text">' + esc(q.text) + '</div>'
+            + teamsContent
+            + '</div>';
+        }).join('')
+      + '</div>';
+  }).join('');
+
+  return '<div class="screen">'
+    + '<button class="btn-back" data-action="go-home">&larr; Back to home</button>'
+    + '<p class="eyebrow">Organizer Dashboard</p>'
+    + '<h1 class="title">Live <em>Notes</em></h1>'
+    + '<div class="dash-stats">'
+    + '<div class="dash-stat"><div class="dash-stat-num">' + totalTeams + '</div><div class="dash-stat-label">Teams</div></div>'
+    + '<div class="dash-stat"><div class="dash-stat-num">' + activeTeams + '</div><div class="dash-stat-label">With Notes</div></div>'
+    + '</div>'
+    + '<button class="btn-download" id="download-btn" style="margin-bottom:32px">Download All Notes (ZIP)</button>'
+    + sectionsHtml
+    + '</div>';
+}
+
+// ================================================================
+//  EVENT LISTENERS & NAVIGATION
+// ================================================================
+function attachListeners() {
+  // Workshop selection
+  document.querySelectorAll('[data-action="select-workshop"]').forEach(function(el) {
+    el.addEventListener('click', async function() {
+      ST.selectedWorkshop = el.dataset.id;
+      await loadQuestions(ST.selectedWorkshop);
+      ST.screen = 'questions';
+      render();
+    });
+  });
+
+  // Question selection
+  document.querySelectorAll('[data-action="select-question"]').forEach(function(el) {
+    el.addEventListener('click', async function() {
+      ST.selectedQuestion = el.dataset.id;
+      await loadExistingTeams(ST.selectedQuestion);
+      ST.screen = 'team-entry';
+      render();
+    });
+  });
+
+  // Join existing team
+  document.querySelectorAll('[data-action="join-team"]').forEach(function(el) {
+    el.addEventListener('click', async function() {
+      ST.teamId = el.dataset.id;
+      ST.teamName = el.dataset.name;
+      await enterNotes();
+    });
+  });
+
+  // Team name input
+  var nameInput = document.getElementById('team-name-input');
+  var startBtn = document.getElementById('start-notes-btn');
+  if (nameInput && startBtn) {
+    nameInput.addEventListener('input', function() {
+      startBtn.disabled = nameInput.value.trim().length === 0;
+    });
+    startBtn.addEventListener('click', async function() {
+      var name = nameInput.value.trim();
+      if (!name) return;
+      var team = await loadOrCreateTeam(ST.selectedQuestion, name);
+      if (!team) return;
+      ST.teamId = team.id;
+      ST.teamName = team.team_name;
+      ST.notes = team.notes || '';
+      ST.screen = 'notes';
+      ST.localStorageKey = 'em-notes-' + ST.teamId;
+      render();
+      setupAutoSave();
+    });
+  }
+
+  // Notes textarea
+  var textarea = document.getElementById('notes-textarea');
+  if (textarea) {
+    textarea.addEventListener('input', function() {
+      ST.notes = textarea.value;
+      localStorage.setItem(ST.localStorageKey, ST.notes);
+      debounceSave();
+    });
+    textarea.focus();
+  }
+
+  // PIN input
+  var pinInput = document.getElementById('pin-input');
+  if (pinInput) {
+    pinInput.focus();
+    pinInput.addEventListener('input', async function() {
+      if (pinInput.value === '2026') {
+        await loadDashboardData();
+        ST.screen = 'dashboard';
+        render();
+      } else if (pinInput.value.length >= 4) {
+        document.getElementById('pin-error').style.display = 'block';
+        pinInput.value = '';
+      }
+    });
+  }
+
+  // Download button
+  var dlBtn = document.getElementById('download-btn');
+  if (dlBtn) {
+    dlBtn.addEventListener('click', downloadZip);
+  }
+
+  // Back buttons
+  document.querySelectorAll('[data-action="go-home"]').forEach(function(el) {
+    el.addEventListener('click', function() {
+      cleanupNotes();
+      ST.screen = 'home';
+      render();
+    });
+  });
+  document.querySelectorAll('[data-action="go-questions"]').forEach(function(el) {
+    el.addEventListener('click', function() { ST.screen = 'questions'; render(); });
+  });
+
+  // View team notes from dashboard
+  document.querySelectorAll('[data-action="view-team-notes"]').forEach(function(el) {
+    el.addEventListener('click', function() {
+      var team = ST.allTeams.find(function(t) { return t.id === el.dataset.id; });
+      if (team) alert(team.team_name + '\n\n' + (team.notes || '(empty)'));
+    });
+  });
+}
+
+async function enterNotes() {
+  // Load the team's existing notes
+  var { data } = await sb.from('teams').select('*').eq('id', ST.teamId).single();
+  if (data) ST.notes = data.notes || '';
+
+  // Check localStorage for unsaved notes
+  ST.localStorageKey = 'em-notes-' + ST.teamId;
+  var local = localStorage.getItem(ST.localStorageKey);
+  if (local && local.length > ST.notes.length) {
+    ST.notes = local; // Recover from offline buffer
+  }
+
+  ST.screen = 'notes';
+  render();
+  setupAutoSave();
+}
+
+function goPin() {
+  ST.screen = 'pin';
+  render();
+}
+
+function cleanupNotes() {
+  if (ST.saveTimer) clearTimeout(ST.saveTimer);
+  if (ST.realtimeSub) { ST.realtimeSub.unsubscribe(); ST.realtimeSub = null; }
+  ST.teamId = null;
+  ST.notes = '';
+  ST.localStorageKey = null;
+}
+
+// ================================================================
+//  AUTO-SAVE
+// ================================================================
+function debounceSave() {
+  ST.saveStatus = 'saving';
+  updateSaveIndicator();
+  if (ST.saveTimer) clearTimeout(ST.saveTimer);
+  ST.saveTimer = setTimeout(function() { saveNotes(); }, 2000);
+}
+
+async function saveNotes() {
+  if (!ST.teamId) return;
+  try {
+    var { error } = await sb.from('teams')
+      .update({ notes: ST.notes, updated_at: new Date().toISOString() })
+      .eq('id', ST.teamId);
+
+    if (error) throw error;
+    ST.saveStatus = 'saved';
+    // Clear localStorage on successful save
+    if (ST.localStorageKey) localStorage.removeItem(ST.localStorageKey);
+  } catch (e) {
+    console.error('Save failed:', e);
+    ST.saveStatus = 'error';
+    // Retry in 5 seconds
+    ST.saveTimer = setTimeout(function() { saveNotes(); }, 5000);
+  }
+  updateSaveIndicator();
+}
+
+function updateSaveIndicator() {
+  var el = document.getElementById('save-indicator');
+  if (!el) return;
+  el.className = 'save-indicator ' + ST.saveStatus;
+  el.textContent = ST.saveStatus === 'saved' ? 'All changes saved' :
+                   ST.saveStatus === 'saving' ? 'Saving...' : 'Save failed — retrying...';
+}
+
+function setupAutoSave() {
+  // Nothing extra needed — input listener already calls debounceSave
+}
+
+// ================================================================
+//  DASHBOARD
+// ================================================================
+async function loadDashboardData() {
+  // Load all questions (for all workshops)
+  var { data: allQ } = await sb.from('questions').select('*').order('sort_order');
+  if (allQ) ST.questions = allQ;
+
+  // Load all teams
+  var { data: allT } = await sb.from('teams').select('*').order('created_at');
+  if (allT) ST.allTeams = allT;
+
+  // Subscribe to realtime changes on teams table
+  if (ST.realtimeSub) ST.realtimeSub.unsubscribe();
+  ST.realtimeSub = sb.channel('dashboard-teams')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'teams' }, function(payload) {
+      if (payload.eventType === 'INSERT') {
+        ST.allTeams.push(payload.new);
+      } else if (payload.eventType === 'UPDATE') {
+        var idx = ST.allTeams.findIndex(function(t) { return t.id === payload.new.id; });
+        if (idx >= 0) ST.allTeams[idx] = payload.new;
+      } else if (payload.eventType === 'DELETE') {
+        ST.allTeams = ST.allTeams.filter(function(t) { return t.id !== payload.old.id; });
+      }
+      render();
+    })
+    .subscribe();
+}
+
+// ================================================================
+//  ZIP EXPORT
+// ================================================================
+async function downloadZip() {
+  var zip = new JSZip();
+  var root = zip.folder('Embodied-Minds-Notes');
+
+  for (var wi = 0; wi < ST.workshops.length; wi++) {
+    var w = ST.workshops[wi];
+    var wName = w.title.replace(/[^a-zA-Z0-9 ]/g, '').replace(/ /g, '-');
+    var wFolder = root.folder(wName);
+    var wQuestions = ST.questions.filter(function(q) { return q.workshop_id === w.id; });
+
+    for (var qi = 0; qi < wQuestions.length; qi++) {
+      var q = wQuestions[qi];
+      var qName = q.short_title + '-' + q.text.substring(0, 40).replace(/[^a-zA-Z0-9 ]/g, '').trim().replace(/ /g, '-');
+      var qFolder = wFolder.folder(qName);
+      var qTeams = ST.allTeams.filter(function(t) { return t.question_id === q.id; });
+
+      for (var ti = 0; ti < qTeams.length; ti++) {
+        var t = qTeams[ti];
+        var content = '# ' + q.text + '\n\n'
+          + '**Team:** ' + t.team_name + '\n'
+          + '**Workshop:** ' + w.title + '\n'
+          + '**Last updated:** ' + new Date(t.updated_at).toLocaleString() + '\n\n'
+          + '---\n\n'
+          + (t.notes || '(no notes)');
+        var fileName = t.team_name.replace(/[^a-zA-Z0-9 ]/g, '').replace(/ /g, '-') + '.md';
+        qFolder.file(fileName, content);
+      }
+    }
+  }
+
+  var blob = await zip.generateAsync({ type: 'blob' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'Embodied-Minds-Notes-' + new Date().toISOString().split('T')[0] + '.zip';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ================================================================
+//  INIT
+// ================================================================
+(async function() {
+  await loadWorkshops();
+  render();
+})();
+</script>
+</body>
+</html>
