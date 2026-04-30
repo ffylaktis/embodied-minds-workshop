@@ -584,7 +584,7 @@ function renderDashboard() {
     + '<button class="btn-download" id="download-btn">Markdown (ZIP)</button>'
     + '<button class="btn-download" id="download-excel-btn">Excel (.xlsx)</button>'
     + '<button class="btn-download" id="download-word-btn">Word (.docx)</button>'
-    + '<button class="btn-download" id="download-all-btn" style="border-color:var(--gold);color:var(--gold);font-weight:600">Download Everything (ZIP)</button>'
+    + '<button class="btn-download" id="download-all-btn" style="border-color:var(--gold);color:var(--gold);font-weight:600">Download Everything + AI Synthesis (ZIP)</button>'
     + '</div>'
     + renderSynthSection()
     + sections;
@@ -688,7 +688,13 @@ function attachListeners() {
   var dlWord = document.getElementById('download-word-btn');
   if (dlWord) dlWord.addEventListener('click', downloadWord);
   var dlAll = document.getElementById('download-all-btn');
-  if (dlAll) dlAll.addEventListener('click', downloadEverything);
+  if (dlAll) dlAll.addEventListener('click', async function() {
+    dlAll.textContent = 'Generating... (running AI synthesis for all workshops)';
+    dlAll.disabled = true;
+    try { await downloadEverything(); } catch(e) { console.error(e); }
+    dlAll.textContent = 'Download Everything + AI Synthesis (ZIP)';
+    dlAll.disabled = false;
+  });
   var dlWc = document.getElementById('dl-wordcloud-btn');
   if (dlWc) dlWc.addEventListener('click', downloadWordCloudPng);
   var dlSynth = document.getElementById('dl-synthesis-btn');
@@ -1030,9 +1036,8 @@ async function downloadEverything() {
   var excelBuf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
   root.file('02-All-Notes.xlsx', excelBuf);
 
-  // 3. Synthesis reports per workshop (if any synthesis has been generated)
+  // 3. Auto-run synthesis for every workshop with notes, generate word clouds
   var synthFolder = root.folder('03-Synthesis');
-  // Run synthesis for all workshops with notes
   for (var si = 0; si < ST.workshops.length; si++) {
     var sw = ST.workshops[si];
     var swTeams = ST.allTeams.filter(function(t) {
@@ -1040,68 +1045,121 @@ async function downloadEverything() {
     });
     if (swTeams.length === 0) continue;
 
-    // Check if we already have a snapshot for this workshop
-    var snapRes = await sb.from('workshop_snapshots').select('*').eq('workshop_id', sw.id).order('created_at', { ascending: false }).limit(1);
-    var snap = snapRes.data && snapRes.data[0];
+    var swName = String(si+1).padStart(2,'0') + '-' + sw.title.replace(/[^a-zA-Z0-9 ]/g, '').replace(/ /g, '-');
+    var swFolder = synthFolder.folder(swName);
 
-    if (snap) {
-      var swName = String(si+1).padStart(2,'0') + '-' + sw.title.replace(/[^a-zA-Z0-9 ]/g, '').replace(/ /g, '-');
-      var swFolder = synthFolder.folder(swName);
+    // Run fresh synthesis via edge function
+    var synthResult = null;
+    try {
+      var resp = await fetch(SYNTH_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY },
+        body: JSON.stringify({ workshop_id: sw.id })
+      });
+      if (resp.ok) synthResult = await resp.json();
+    } catch (e) { console.error('Synthesis failed for ' + sw.title, e); }
+
+    if (synthResult) {
+      var synth = synthResult.synthesis || {};
+      var wFreqs = synthResult.word_frequencies || [];
 
       // Synthesis markdown
-      var synthMd = '# Synthesis: ' + sw.title + '\n\nGenerated: ' + new Date(snap.created_at).toLocaleString() + '\n\n';
-      synthMd += '## Knowledge Gaps\n\n' + (snap.synthesis.gaps || []).map(function(g) { return '- ' + g; }).join('\n') + '\n\n';
-      synthMd += '## Opportunities\n\n' + (snap.synthesis.opportunities || []).map(function(o) { return '- ' + o; }).join('\n') + '\n\n';
-      synthMd += '## Themes\n\n' + (snap.synthesis.themes || []).map(function(t) { return '### ' + (t.name || t.theme || '') + ' (' + (t.mentions || 0) + ' mentions)\n' + (t.description || '') + '\n'; }).join('\n') + '\n';
-      synthMd += '## Word Frequencies\n\n' + (snap.word_frequencies || []).slice(0, 30).map(function(w) { return '- **' + w.word + '**: ' + w.count; }).join('\n') + '\n';
+      var synthMd = '# Synthesis: ' + sw.title + '\n\nGenerated: ' + new Date().toLocaleString() + '\n\n';
+      synthMd += '## Knowledge Gaps\n\n' + (synth.gaps || []).map(function(g) { return '- ' + g; }).join('\n') + '\n\n';
+      synthMd += '## Opportunities\n\n' + (synth.opportunities || []).map(function(o) { return '- ' + o; }).join('\n') + '\n\n';
+      synthMd += '## Themes\n\n' + (synth.themes || []).map(function(t) { return '### ' + (t.name || t.theme || '') + ' (' + (t.mentions || 0) + ' mentions)\n' + (t.description || '') + '\n'; }).join('\n') + '\n';
+      synthMd += '## Word Frequencies\n\n' + wFreqs.slice(0, 30).map(function(w) { return '- **' + w.word + '**: ' + w.count; }).join('\n') + '\n';
       swFolder.file('synthesis-report.md', synthMd);
 
       // Synthesis Excel
       var swb = XLSX.utils.book_new();
-      var gapsRows = (snap.synthesis.gaps || []).map(function(g, i) { return { '#': i+1, Gap: g }; });
+      var gapsRows = (synth.gaps || []).map(function(g, i) { return { '#': i+1, Gap: g }; });
       if (gapsRows.length) { var gs = XLSX.utils.json_to_sheet(gapsRows); XLSX.utils.book_append_sheet(swb, gs, 'Gaps'); }
-      var oppsRows = (snap.synthesis.opportunities || []).map(function(o, i) { return { '#': i+1, Opportunity: o }; });
+      var oppsRows = (synth.opportunities || []).map(function(o, i) { return { '#': i+1, Opportunity: o }; });
       if (oppsRows.length) { var os = XLSX.utils.json_to_sheet(oppsRows); XLSX.utils.book_append_sheet(swb, os, 'Opportunities'); }
-      var themeRows = (snap.synthesis.themes || []).map(function(t) { return { Theme: t.name || t.theme || '', Description: t.description || '', Mentions: t.mentions || 0 }; });
+      var themeRows = (synth.themes || []).map(function(t) { return { Theme: t.name || t.theme || '', Description: t.description || '', Mentions: t.mentions || 0 }; });
       if (themeRows.length) { var ts = XLSX.utils.json_to_sheet(themeRows); XLSX.utils.book_append_sheet(swb, ts, 'Themes'); }
-      var wordRows = (snap.word_frequencies || []).map(function(w) { return { Word: w.word, Count: w.count }; });
+      var wordRows = wFreqs.map(function(w) { return { Word: w.word, Count: w.count }; });
       if (wordRows.length) { var wfs = XLSX.utils.json_to_sheet(wordRows); XLSX.utils.book_append_sheet(swb, wfs, 'Word Frequencies'); }
       var synthExcel = XLSX.write(swb, { bookType: 'xlsx', type: 'array' });
       swFolder.file('synthesis-report.xlsx', synthExcel);
-    }
-  }
 
-  // 4. Word cloud PNG (if visible)
-  var svgEl = document.querySelector('#synth-wordcloud svg');
-  if (svgEl) {
-    try {
-      var wcW = parseInt(svgEl.getAttribute('width'));
-      var wcH = parseInt(svgEl.getAttribute('height'));
-      var clone = svgEl.cloneNode(true);
-      var bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-      bg.setAttribute('width', wcW); bg.setAttribute('height', wcH); bg.setAttribute('fill', '#10121F');
-      clone.insertBefore(bg, clone.firstChild);
-      var svgData = new XMLSerializer().serializeToString(clone);
-      var canvas = document.createElement('canvas');
-      canvas.width = wcW * 2; canvas.height = wcH * 2;
-      var ctx = canvas.getContext('2d');
-      ctx.scale(2, 2);
-      var pngBlob = await new Promise(function(resolve) {
-        var img = new Image();
-        img.onload = function() {
-          ctx.drawImage(img, 0, 0);
-          canvas.toBlob(function(b) { resolve(b); }, 'image/png');
-        };
-        img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
-      });
-      if (pngBlob) root.file('04-Word-Cloud.png', pngBlob);
-    } catch (e) { console.error('Word cloud PNG export failed:', e); }
+      // Generate word cloud PNG for this workshop using offscreen SVG
+      if (wFreqs.length > 0) {
+        try {
+          var wcPng = await generateWordCloudPng(wFreqs);
+          if (wcPng) swFolder.file('word-cloud.png', wcPng);
+        } catch (e) { console.error('Word cloud PNG failed for ' + sw.title, e); }
+      }
+    }
   }
 
   var blob = await zip.generateAsync({ type: 'blob' });
   var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
   a.download = 'Embodied-Minds-Complete-' + dateStr + '.zip';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+// ================================================================
+//  OFFSCREEN WORD CLOUD PNG
+// ================================================================
+function generateWordCloudPng(freqs) {
+  return new Promise(function(resolve) {
+    var wcW = 700, wcH = 350;
+    var maxCount = d3.max(freqs, function(d) { return d.count; }) || 1;
+    var sizeScale = d3.scaleSqrt().domain([1, maxCount]).range([12, 56]);
+    var palette = ['#9B8EC4', '#D4A94E', '#B8A8D8', '#C49A42', '#7B6EA4', '#E8C870', '#A097C0', '#D4B67E'];
+    var words = freqs.slice(0, 80).map(function(d) {
+      return { text: d.word, size: sizeScale(d.count) };
+    });
+
+    // Create offscreen container
+    var offscreen = document.createElement('div');
+    offscreen.style.position = 'absolute';
+    offscreen.style.left = '-9999px';
+    document.body.appendChild(offscreen);
+
+    var svg = d3.select(offscreen).append('svg')
+      .attr('xmlns', 'http://www.w3.org/2000/svg')
+      .attr('width', wcW).attr('height', wcH);
+    svg.append('rect').attr('width', wcW).attr('height', wcH).attr('fill', '#10121F');
+    var g = svg.append('g').attr('transform', 'translate(' + wcW/2 + ',' + wcH/2 + ')');
+
+    d3.layout.cloud()
+      .size([wcW, wcH])
+      .words(words)
+      .padding(4)
+      .rotate(function() { return (~~(Math.random() * 3) - 1) * 30; })
+      .font('Sora')
+      .fontSize(function(d) { return d.size; })
+      .on('end', function(drawn) {
+        g.selectAll('text').data(drawn).enter().append('text')
+          .style('font-size', function(d) { return d.size + 'px'; })
+          .style('fill', function(d, i) { return palette[i % palette.length]; })
+          .attr('text-anchor', 'middle')
+          .attr('font-family', 'Sora, sans-serif')
+          .attr('font-weight', function(d) { return d.size > 30 ? '600' : '400'; })
+          .attr('transform', function(d) { return 'translate(' + [d.x, d.y] + ')rotate(' + d.rotate + ')'; })
+          .text(function(d) { return d.text; });
+
+        var svgData = new XMLSerializer().serializeToString(svg.node());
+        var canvas = document.createElement('canvas');
+        canvas.width = wcW * 2; canvas.height = wcH * 2;
+        var ctx = canvas.getContext('2d');
+        ctx.scale(2, 2);
+        var img = new Image();
+        img.onload = function() {
+          ctx.drawImage(img, 0, 0);
+          canvas.toBlob(function(b) {
+            document.body.removeChild(offscreen);
+            resolve(b);
+          }, 'image/png');
+        };
+        img.onerror = function() { document.body.removeChild(offscreen); resolve(null); };
+        img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+      })
+      .start();
+  });
 }
 
 // ================================================================
