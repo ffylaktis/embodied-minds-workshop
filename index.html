@@ -281,6 +281,13 @@
       content: ''; position: absolute; left: 0; top: 14px;
       width: 6px; height: 6px; border-radius: 50%; background: var(--lavender);
     }
+    .synth-subcat {
+      font-family: var(--font-serif); font-size: 15px; font-weight: 500; color: var(--lavender);
+      margin: 16px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--lunar-07);
+      letter-spacing: 0.3px;
+    }
+    .synth-subcat:first-child { margin-top: 0; }
+    .synth-card ul.subcat-list { margin-bottom: 12px; }
 
     .synth-themes { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-bottom: 24px; }
     .synth-theme-card {
@@ -926,13 +933,15 @@ function downloadSynthesisExcel() {
   var w = ST.workshops.find(function(w) { return w.id === ST.synthWorkshopId; });
   var wTitle = w ? w.title : 'Workshop';
 
-  // Gaps sheet
-  var gapsRows = (ST.synthData.gaps || []).map(function(g, i) { return { '#': i + 1, 'Knowledge Gap': g }; });
-  if (gapsRows.length) { var gs = XLSX.utils.json_to_sheet(gapsRows); gs['!cols'] = [{ wch: 5 }, { wch: 100 }]; XLSX.utils.book_append_sheet(wb, gs, 'Gaps'); }
+  // Gaps sheet (with subcategories)
+  var gapsFlat = flattenCategorized(ST.synthData.gaps);
+  var gapsRows = gapsFlat.map(function(g, i) { return { '#': i + 1, 'Category': g.category, 'Knowledge Gap': g.item }; });
+  if (gapsRows.length) { var gs = XLSX.utils.json_to_sheet(gapsRows); gs['!cols'] = [{ wch: 5 }, { wch: 30 }, { wch: 100 }]; XLSX.utils.book_append_sheet(wb, gs, 'Gaps'); }
 
-  // Opportunities sheet
-  var oppsRows = (ST.synthData.opportunities || []).map(function(o, i) { return { '#': i + 1, 'Opportunity': o }; });
-  if (oppsRows.length) { var os = XLSX.utils.json_to_sheet(oppsRows); os['!cols'] = [{ wch: 5 }, { wch: 100 }]; XLSX.utils.book_append_sheet(wb, os, 'Opportunities'); }
+  // Opportunities sheet (with subcategories)
+  var oppsFlat = flattenCategorized(ST.synthData.opportunities);
+  var oppsRows = oppsFlat.map(function(o, i) { return { '#': i + 1, 'Category': o.category, 'Opportunity': o.item }; });
+  if (oppsRows.length) { var os = XLSX.utils.json_to_sheet(oppsRows); os['!cols'] = [{ wch: 5 }, { wch: 30 }, { wch: 100 }]; XLSX.utils.book_append_sheet(wb, os, 'Opportunities'); }
 
   // Themes sheet
   var themeRows = (ST.synthData.themes || []).map(function(t) { return { 'Theme': t.name || t.theme || '', 'Description': t.description || '', 'Mentions': t.mentions || t.mention_count || 0 }; });
@@ -958,16 +967,18 @@ async function downloadSynthesisWord() {
   children.push(new D.Paragraph({ children: [new D.TextRun({ text: 'Synthesis Report: ' + wTitle, bold: true, size: 44, font: 'Georgia' })], spacing: { after: 200 } }));
   children.push(new D.Paragraph({ children: [new D.TextRun({ text: 'Generated ' + new Date().toLocaleString(), size: 22, color: '666666' })], spacing: { after: 400 } }));
 
-  // Gaps
+  // Gaps (with subcategories)
   children.push(new D.Paragraph({ children: [new D.TextRun({ text: 'Knowledge Gaps', bold: true, size: 32 })], spacing: { before: 300, after: 150 }, heading: D.HeadingLevel.HEADING_1 }));
-  (ST.synthData.gaps || []).forEach(function(g) {
-    children.push(new D.Paragraph({ children: [new D.TextRun({ text: g, size: 22 })], spacing: { after: 80 }, bullet: { level: 0 } }));
+  normalizeCategorized(ST.synthData.gaps).forEach(function(c) {
+    if (c.category) children.push(new D.Paragraph({ children: [new D.TextRun({ text: c.category, bold: true, size: 26, color: '6B5F8A' })], spacing: { before: 200, after: 80 }, heading: D.HeadingLevel.HEADING_2 }));
+    (c.items || []).forEach(function(g) { children.push(new D.Paragraph({ children: [new D.TextRun({ text: g, size: 22 })], spacing: { after: 80 }, bullet: { level: 0 } })); });
   });
 
-  // Opportunities
+  // Opportunities (with subcategories)
   children.push(new D.Paragraph({ children: [new D.TextRun({ text: 'Opportunities', bold: true, size: 32 })], spacing: { before: 300, after: 150 }, heading: D.HeadingLevel.HEADING_1 }));
-  (ST.synthData.opportunities || []).forEach(function(o) {
-    children.push(new D.Paragraph({ children: [new D.TextRun({ text: o, size: 22 })], spacing: { after: 80 }, bullet: { level: 0 } }));
+  normalizeCategorized(ST.synthData.opportunities).forEach(function(c) {
+    if (c.category) children.push(new D.Paragraph({ children: [new D.TextRun({ text: c.category, bold: true, size: 26, color: '6B5F8A' })], spacing: { before: 200, after: 80 }, heading: D.HeadingLevel.HEADING_2 }));
+    (c.items || []).forEach(function(o) { children.push(new D.Paragraph({ children: [new D.TextRun({ text: o, size: 22 })], spacing: { after: 80 }, bullet: { level: 0 } })); });
   });
 
   // Themes
@@ -1065,17 +1076,19 @@ async function downloadEverything() {
 
       // Synthesis markdown
       var synthMd = '# Synthesis: ' + sw.title + '\n\nGenerated: ' + new Date().toLocaleString() + '\n\n';
-      synthMd += '## Knowledge Gaps\n\n' + (synth.gaps || []).map(function(g) { return '- ' + g; }).join('\n') + '\n\n';
-      synthMd += '## Opportunities\n\n' + (synth.opportunities || []).map(function(o) { return '- ' + o; }).join('\n') + '\n\n';
+      synthMd += categorizedToMarkdown(synth.gaps, 'Knowledge Gaps');
+      synthMd += categorizedToMarkdown(synth.opportunities, 'Opportunities');
       synthMd += '## Themes\n\n' + (synth.themes || []).map(function(t) { return '### ' + (t.name || t.theme || '') + ' (' + (t.mentions || 0) + ' mentions)\n' + (t.description || '') + '\n'; }).join('\n') + '\n';
       synthMd += '## Word Frequencies\n\n' + wFreqs.slice(0, 30).map(function(w) { return '- **' + w.word + '**: ' + w.count; }).join('\n') + '\n';
       swFolder.file('synthesis-report.md', synthMd);
 
       // Synthesis Excel
       var swb = XLSX.utils.book_new();
-      var gapsRows = (synth.gaps || []).map(function(g, i) { return { '#': i+1, Gap: g }; });
+      var gapsFlat = flattenCategorized(synth.gaps);
+      var gapsRows = gapsFlat.map(function(g, i) { return { '#': i+1, Category: g.category, Gap: g.item }; });
       if (gapsRows.length) { var gs = XLSX.utils.json_to_sheet(gapsRows); XLSX.utils.book_append_sheet(swb, gs, 'Gaps'); }
-      var oppsRows = (synth.opportunities || []).map(function(o, i) { return { '#': i+1, Opportunity: o }; });
+      var oppsFlat = flattenCategorized(synth.opportunities);
+      var oppsRows = oppsFlat.map(function(o, i) { return { '#': i+1, Category: o.category, Opportunity: o.item }; });
       if (oppsRows.length) { var os = XLSX.utils.json_to_sheet(oppsRows); XLSX.utils.book_append_sheet(swb, os, 'Opportunities'); }
       var themeRows = (synth.themes || []).map(function(t) { return { Theme: t.name || t.theme || '', Description: t.description || '', Mentions: t.mentions || 0 }; });
       if (themeRows.length) { var ts = XLSX.utils.json_to_sheet(themeRows); XLSX.utils.book_append_sheet(swb, ts, 'Themes'); }
@@ -1163,11 +1176,51 @@ function generateWordCloudPng(freqs) {
 }
 
 // ================================================================
+//  CATEGORIZED GAPS/OPPORTUNITIES HELPERS
+// ================================================================
+// Normalizes gaps/opportunities data to categorized format:
+// Input can be flat array ["a","b"] or categorized [{category:"Cat",items:["a","b"]}]
+function normalizeCategorized(data) {
+  if (!data || !data.length) return [];
+  if (typeof data[0] === 'string') return [{ category: null, items: data }];
+  return data;
+}
+
+function renderCategorizedHtml(data) {
+  var cats = normalizeCategorized(data);
+  return cats.map(function(c) {
+    var items = (c.items || []).map(function(item) { return '<li>' + esc(item) + '</li>'; }).join('');
+    if (c.category) {
+      return '<div class="synth-subcat">' + esc(c.category) + '</div><ul class="subcat-list">' + items + '</ul>';
+    }
+    return '<ul>' + items + '</ul>';
+  }).join('');
+}
+
+function flattenCategorized(data) {
+  var cats = normalizeCategorized(data);
+  var flat = [];
+  cats.forEach(function(c) { (c.items || []).forEach(function(item) { flat.push({ category: c.category || '', item: item }); }); });
+  return flat;
+}
+
+function categorizedToMarkdown(data, heading) {
+  var cats = normalizeCategorized(data);
+  var md = '## ' + heading + '\n\n';
+  cats.forEach(function(c) {
+    if (c.category) md += '### ' + c.category + '\n\n';
+    (c.items || []).forEach(function(item) { md += '- ' + item + '\n'; });
+    md += '\n';
+  });
+  return md;
+}
+
+// ================================================================
 //  SYNTHESIS
 // ================================================================
 var SYNTH_URL = SB_URL + '/functions/v1/synthesize';
 
-async function triggerSynthesis(workshopId) {
+async function triggerSynthesis(workshopId, forceRefresh) {
   ST.synthWorkshopId = workshopId;
   ST.synthLoading = true;
   ST.synthData = null;
@@ -1176,6 +1229,31 @@ async function triggerSynthesis(workshopId) {
   ST.synthSnapshotIdx = -1;
   clearSynthTimers();
   render();
+
+  // Check for existing snapshot first (unless forced)
+  if (!forceRefresh) {
+    try {
+      var cached = await sb.from('workshop_snapshots')
+        .select('*')
+        .eq('workshop_id', workshopId)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (cached.data && cached.data.length > 0) {
+        var snap = cached.data[0];
+        ST.synthData = snap.synthesis || {};
+        ST.synthWordFreqs = snap.word_frequencies || [];
+        ST.synthLoading = false;
+        await loadSnapshots(workshopId);
+        render();
+        setTimeout(function() { renderWordCloud(ST.synthWordFreqs); }, 100);
+        return;
+      }
+    } catch (e) {
+      console.warn('Snapshot lookup failed, falling back to fresh synthesis:', e);
+    }
+  }
+
+  // No cached data (or forced refresh) — call the edge function
   try {
     var resp = await fetch(SYNTH_URL, {
       method: 'POST',
@@ -1229,7 +1307,7 @@ function toggleAutoRefresh() {
   if (ST.synthAutoRefreshTimer) { clearInterval(ST.synthAutoRefreshTimer); ST.synthAutoRefreshTimer = null; }
   if (ST.synthAutoRefresh && ST.synthWorkshopId) {
     ST.synthAutoRefreshTimer = setInterval(function() {
-      triggerSynthesis(ST.synthWorkshopId);
+      triggerSynthesis(ST.synthWorkshopId, true);
     }, 60000);
   }
   updateAutoRefreshBtn();
@@ -1273,10 +1351,10 @@ function updateAnalysisCards() {
   var oppsEl = document.getElementById('synth-opps-list');
   var themesEl = document.getElementById('synth-themes-grid');
   if (gapsEl && ST.synthData.gaps) {
-    gapsEl.innerHTML = ST.synthData.gaps.map(function(g) { return '<li>' + esc(g) + '</li>'; }).join('');
+    gapsEl.innerHTML = renderCategorizedHtml(ST.synthData.gaps);
   }
   if (oppsEl && ST.synthData.opportunities) {
-    oppsEl.innerHTML = ST.synthData.opportunities.map(function(o) { return '<li>' + esc(o) + '</li>'; }).join('');
+    oppsEl.innerHTML = renderCategorizedHtml(ST.synthData.opportunities);
   }
   if (themesEl && ST.synthData.themes) {
     themesEl.innerHTML = ST.synthData.themes.map(function(t) {
@@ -1348,12 +1426,12 @@ function renderSynthSection() {
   if (ST.synthLoading) {
     content = '<div class="synth-loading"><div class="synth-loading-spinner"></div><div class="synth-loading-text">Claude is analyzing workshop notes...</div></div>';
   } else if (ST.synthData) {
-    // Gaps & Opportunities
-    var gaps = (ST.synthData.gaps || []).map(function(g) { return '<li>' + esc(g) + '</li>'; }).join('');
-    var opps = (ST.synthData.opportunities || []).map(function(o) { return '<li>' + esc(o) + '</li>'; }).join('');
+    // Gaps & Opportunities (supports subcategories)
+    var gapsHtml = renderCategorizedHtml(ST.synthData.gaps);
+    var oppsHtml = renderCategorizedHtml(ST.synthData.opportunities);
     var panel = '<div class="synth-panel">'
-      + '<div class="synth-card"><div class="synth-card-title">Knowledge Gaps</div><ul id="synth-gaps-list">' + (gaps || '<li style="color:var(--lunar-40)">No gaps identified</li>') + '</ul></div>'
-      + '<div class="synth-card"><div class="synth-card-title">Opportunities</div><ul id="synth-opps-list">' + (opps || '<li style="color:var(--lunar-40)">No opportunities identified</li>') + '</ul></div>'
+      + '<div class="synth-card"><div class="synth-card-title">Knowledge Gaps</div><div id="synth-gaps-list">' + (gapsHtml || '<p style="font-size:14px;color:var(--lunar-40)">No gaps identified</p>') + '</div></div>'
+      + '<div class="synth-card"><div class="synth-card-title">Opportunities</div><div id="synth-opps-list">' + (oppsHtml || '<p style="font-size:14px;color:var(--lunar-40)">No opportunities identified</p>') + '</div></div>'
       + '</div>';
 
     // Themes
@@ -1384,7 +1462,7 @@ function renderSynthSection() {
 
     // Controls
     var controls = '<div class="synth-controls">'
-      + '<button class="synth-btn" data-action="synth-refresh">Refresh Now</button>'
+      + '<button class="synth-btn" data-action="synth-resynthesize">Re-synthesize</button>'
       + '<button class="synth-btn' + (ST.synthAutoRefresh ? ' active' : '') + '" id="synth-autorefresh-btn">' + (ST.synthAutoRefresh ? 'Live: ON' : 'Live: OFF') + '</button>'
       + '</div>'
       + '<div class="synth-controls" style="margin-top:8px">'
@@ -1420,8 +1498,8 @@ function attachSynthListeners() {
   if (apBtn) apBtn.addEventListener('click', toggleAutoPlay);
   var arBtn = document.getElementById('synth-autorefresh-btn');
   if (arBtn) arBtn.addEventListener('click', toggleAutoRefresh);
-  document.querySelectorAll('[data-action="synth-refresh"]').forEach(function(el) {
-    el.addEventListener('click', function() { if (ST.synthWorkshopId) triggerSynthesis(ST.synthWorkshopId); });
+  document.querySelectorAll('[data-action="synth-resynthesize"]').forEach(function(el) {
+    el.addEventListener('click', function() { if (ST.synthWorkshopId) triggerSynthesis(ST.synthWorkshopId, true); });
   });
 }
 
